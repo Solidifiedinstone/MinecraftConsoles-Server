@@ -434,10 +434,50 @@ class ProgressRenderer;
 class Minecraft;
 
 //=============================================================================
-// Game host options - forward declare, defined in App_enums.h
+// Game host options - defined from App_enums.h
 //=============================================================================
-enum eGameHostOption;
-enum eXuiServerAction;
+enum eGameHostOption
+{
+    eGameHostOption_Difficulty=0,
+    eGameHostOption_OnlineGame, // Unused
+    eGameHostOption_InviteOnly, // Unused
+    eGameHostOption_FriendsOfFriends,
+    eGameHostOption_Gamertags,
+    eGameHostOption_Tutorial, // special case
+    eGameHostOption_GameType,
+    eGameHostOption_LevelType, // flat or default
+    eGameHostOption_Structures,
+    eGameHostOption_BonusChest,
+    eGameHostOption_HasBeenInCreative,
+    eGameHostOption_PvP,
+    eGameHostOption_TrustPlayers,
+    eGameHostOption_TNT,
+    eGameHostOption_FireSpreads,
+    eGameHostOption_CheatsEnabled, // special case
+    eGameHostOption_HostCanFly,
+    eGameHostOption_HostCanChangeHunger,
+    eGameHostOption_HostCanBeInvisible,
+    eGameHostOption_BedrockFog,
+    eGameHostOption_NoHUD,
+    eGameHostOption_WorldSize,
+    eGameHostOption_All,
+    eGameHostOption_DisableSaving,
+    eGameHostOption_WasntSaveOwner,
+    eGameHostOption_MobGriefing,
+    eGameHostOption_KeepInventory,
+    eGameHostOption_DoMobSpawning,
+    eGameHostOption_DoMobLoot,
+    eGameHostOption_DoTileDrops,
+    eGameHostOption_NaturalRegeneration,
+    eGameHostOption_DoDaylightCycle,
+    eGameHostOption_Max  // Must be last
+};
+
+enum eXuiServerAction
+{
+    eXuiServerAction_None = 0,
+    eXuiServerAction_Max
+};
 
 //=============================================================================
 // CMinecraftApp stub
