@@ -5,6 +5,12 @@
 
 #pragma once
 
+// For dedicated server builds, use the server-specific header instead
+#ifdef _DEDICATED_SERVER
+#include "DedicatedServer/stdafx_server.h"
+#else
+// Normal client precompiled header follows
+
 //#include <xtl.h>
 //#include <xboxmath.h>
 
@@ -352,3 +358,5 @@ typedef XUID GameSessionUID;
 #endif
 
 void MemSect(int sect);
+
+#endif // _DEDICATED_SERVER (closes the #else block at the top)

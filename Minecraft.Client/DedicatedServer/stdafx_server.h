@@ -432,24 +432,33 @@ namespace C4JRender {
 // C4JStorage stub namespace (for headers that reference C4JStorage types)
 //=============================================================================
 namespace C4JStorage {
-    enum eStorageFacility {
+    // Note: eGlobalStorage, eTMS_FILETYPEVAL are used as TYPE NAMES in code
+    // e.g. "C4JStorage::eGlobalStorage eStorageFacility;" - so they must be typedefs
+    enum eStorageFacilityEnum {
         eFACILITY_NONE = 0,
         eFACILITY_LOCAL,
-        eFACILITY_REMOTE,
-        eGlobalStorage = eFACILITY_LOCAL
+        eFACILITY_REMOTE
     };
-    enum eFileTypeVal {
+    typedef eStorageFacilityEnum eStorageFacility;
+    typedef eStorageFacilityEnum eGlobalStorage;  // Alias type name used in client code
+
+    enum eFileTypeValEnum {
         eFILE_NONE = 0,
         eFILE_SAVE,
-        eFILE_WORLD,
-        eTMS_FILETYPEVAL = eFILE_NONE
+        eFILE_WORLD
     };
+    typedef eFileTypeValEnum eFileTypeVal;
+    typedef eFileTypeValEnum eTMS_FILETYPEVAL;  // Alias type name used in client code
+
     enum EMessageResult {
         eRESULT_OK = 0,
         eRESULT_CANCEL,
         eRESULT_ERROR
     };
     typedef void* PTMSPP_FILEDATA;
+
+    // Callback type alias
+    typedef int eOptionsCallback;
 }
 
 //=============================================================================
