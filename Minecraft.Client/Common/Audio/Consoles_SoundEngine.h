@@ -2,6 +2,8 @@
 
 #include "..\..\..\Minecraft.World\SoundTypes.h"
 
+#ifndef _DEDICATED_SERVER
+// Miles Sound System includes - not needed for dedicated server
 #ifdef _XBOX
 
 #elif defined (__PS3__)
@@ -21,6 +23,7 @@
 #define _SEKRIT2
 #include "..\..\Orbis\Miles\include\mss.h"
 #endif
+#endif // _DEDICATED_SERVER
 
 typedef struct
 {

@@ -413,6 +413,43 @@ public:
 #define StorageManager CStorageManager::GetInstance()
 
 //=============================================================================
+// C4JRender stub namespace (for headers that reference C4JRender types)
+//=============================================================================
+namespace C4JRender {
+    enum eTextureFormat {
+        eFMT_DEFAULT = 0,
+        eFMT_DXT1,
+        eFMT_DXT5,
+        eFMT_A8R8G8B8,
+        eFMT_R8G8B8,
+        eFMT_A8
+    };
+    typedef eTextureFormat TEXTURE_FORMAT;
+}
+
+//=============================================================================
+// C4JStorage stub namespace (for headers that reference C4JStorage types)
+//=============================================================================
+namespace C4JStorage {
+    enum eStorageFacility {
+        eFACILITY_NONE = 0,
+        eFACILITY_LOCAL,
+        eFACILITY_REMOTE
+    };
+    enum eFileTypeVal {
+        eFILE_NONE = 0,
+        eFILE_SAVE,
+        eFILE_WORLD
+    };
+    typedef void* PTMSPP_FILEDATA;
+}
+
+//=============================================================================
+// Constants needed by various headers
+//=============================================================================
+const int MAX_SAVEFILENAME_LENGTH = 256;
+
+//=============================================================================
 // Forward declarations for GUI/Rendering types
 // Note: These types are defined in Minecraft.Client headers - do NOT define stubs here
 //=============================================================================
@@ -434,50 +471,12 @@ class ProgressRenderer;
 class Minecraft;
 
 //=============================================================================
-// Game host options - defined from App_enums.h
+// Game host options and other enums - include from real header
 //=============================================================================
-enum eGameHostOption
-{
-    eGameHostOption_Difficulty=0,
-    eGameHostOption_OnlineGame, // Unused
-    eGameHostOption_InviteOnly, // Unused
-    eGameHostOption_FriendsOfFriends,
-    eGameHostOption_Gamertags,
-    eGameHostOption_Tutorial, // special case
-    eGameHostOption_GameType,
-    eGameHostOption_LevelType, // flat or default
-    eGameHostOption_Structures,
-    eGameHostOption_BonusChest,
-    eGameHostOption_HasBeenInCreative,
-    eGameHostOption_PvP,
-    eGameHostOption_TrustPlayers,
-    eGameHostOption_TNT,
-    eGameHostOption_FireSpreads,
-    eGameHostOption_CheatsEnabled, // special case
-    eGameHostOption_HostCanFly,
-    eGameHostOption_HostCanChangeHunger,
-    eGameHostOption_HostCanBeInvisible,
-    eGameHostOption_BedrockFog,
-    eGameHostOption_NoHUD,
-    eGameHostOption_WorldSize,
-    eGameHostOption_All,
-    eGameHostOption_DisableSaving,
-    eGameHostOption_WasntSaveOwner,
-    eGameHostOption_MobGriefing,
-    eGameHostOption_KeepInventory,
-    eGameHostOption_DoMobSpawning,
-    eGameHostOption_DoMobLoot,
-    eGameHostOption_DoTileDrops,
-    eGameHostOption_NaturalRegeneration,
-    eGameHostOption_DoDaylightCycle,
-    eGameHostOption_Max  // Must be last
-};
+#include "../Common/App_enums.h"
 
-enum eXuiServerAction
-{
-    eXuiServerAction_None = 0,
-    eXuiServerAction_Max
-};
+// Add eGameHostOption_Max which isn't in the original enum
+const int eGameHostOption_Max = eGameHostOption_DoDaylightCycle + 1;
 
 //=============================================================================
 // CMinecraftApp stub
@@ -560,7 +559,10 @@ public:
     void SetTrialTimerLimitSecs(int) {}
     static CUI& GetInstance() { static CUI inst; return inst; }
 };
-#define ui CUI::GetInstance()
+// Note: Don't use #define ui as it conflicts with Windows oleauto.h
+// Use CUI::GetInstance() directly or define a unique macro name
+inline CUI& GetUIInstance() { return CUI::GetInstance(); }
+#define UI_INST GetUIInstance()
 
 //=============================================================================
 // Telemetry stub
@@ -618,11 +620,9 @@ extern CGameNetworkManager g_NetworkManager;
 //=============================================================================
 
 //=============================================================================
-// Color type (needed before Minecraft.World headers)
+// Color constants (eMinecraftColour type is now from App_enums.h)
 //=============================================================================
-typedef DWORD eMinecraftColour;
-const eMinecraftColour MC_WHITE = 0xFFFFFFFF;
-const eMinecraftColour MC_BLACK = 0xFF000000;
+// eMinecraftColour is an enum defined in App_enums.h
 
 //=============================================================================
 // Forward declarations needed by Minecraft.Client headers

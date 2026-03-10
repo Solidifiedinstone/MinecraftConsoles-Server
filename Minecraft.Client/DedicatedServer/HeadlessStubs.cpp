@@ -228,9 +228,7 @@ public:
 
 static UIStub g_uiStub;
 
-// XEnable functions stub
-void XEnableGuestSignin(BOOL) {}
-
+// Note: XEnableGuestSignin is now defined inline in stdafx_server.h
 // Note: ShutdownManager and TelemetryManager are already defined in stdafx_server.h
 
 #endif // _DEDICATED_SERVER

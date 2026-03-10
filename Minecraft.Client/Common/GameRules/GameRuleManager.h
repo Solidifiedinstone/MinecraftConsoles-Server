@@ -1,4 +1,9 @@
 #pragma once
+
+#ifdef _DEDICATED_SERVER
+// Stub for dedicated server - full implementation defined in stdafx_server.h
+#else
+
 using namespace std;
 
 #include "LevelGenerators.h"
@@ -78,3 +83,5 @@ public:
 	// Properly cleans-up and unloads the current set of gameRules.
 	void unloadCurrentGameRules();
 };
+
+#endif // _DEDICATED_SERVER

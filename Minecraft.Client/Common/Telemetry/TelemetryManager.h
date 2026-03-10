@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef _DEDICATED_SERVER
+// Stub for dedicated server - full implementation defined in stdafx_server.h
+#else
+
 #include "..\..\Common\UI\UIEnums.h"
 
 class CTelemetryManager
@@ -63,3 +67,5 @@ protected:
 };
 
 extern CTelemetryManager *TelemetryManager;
+
+#endif // _DEDICATED_SERVER
