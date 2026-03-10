@@ -1,5 +1,6 @@
 // stdafx_server.h - Complete precompiled header for Dedicated Server
 // Provides all necessary types and stubs for headless server operation
+// This header is FULLY SELF-CONTAINED - no Minecraft.World includes
 
 #pragma once
 
@@ -27,6 +28,7 @@
 #include <ctime>
 #include <cstdarg>
 #include <cassert>
+#include <cmath>
 #include <string>
 #include <vector>
 #include <list>
@@ -42,11 +44,18 @@
 #include <sstream>
 #include <exception>
 #include <functional>
+#include <atomic>
+#include <mutex>
+#include <thread>
 
 // Type definitions
 #ifndef __uint64
 typedef unsigned long long __uint64;
 #endif
+
+typedef unsigned char byte;
+typedef ULONGLONG PlayerUID;
+typedef ULONGLONG GameSessionUID;
 
 // Macros
 #define AUTO_VAR(_var, _val) auto _var = _val
@@ -62,6 +71,16 @@ using std::shared_ptr;
 using std::make_shared;
 using std::unique_ptr;
 using std::weak_ptr;
+
+//=============================================================================
+// Undefine any Windows macros that conflict with game code
+//=============================================================================
+#ifdef BIGENDIAN
+#undef BIGENDIAN
+#endif
+#ifdef LITTLEENDIAN
+#undef LITTLEENDIAN
+#endif
 
 //=============================================================================
 // DirectX Stubs (server doesn't need graphics)
@@ -90,6 +109,8 @@ typedef void* ID3D11ShaderResourceView;
 inline void PIXBeginNamedEvent(DWORD, const char*, ...) {}
 inline void PIXEndNamedEvent() {}
 inline void PIXReportCounter(const wchar_t*, float) {}
+inline void PIXAddNamedCounter(int, char*, ...) {}
+inline void PIXSetMarkerDeprecated(int, char*, ...) {}
 
 //=============================================================================
 // Platform Constants
@@ -106,27 +127,34 @@ inline void PIXReportCounter(const wchar_t*, float) {}
 #define MINECRAFT_NET_MAX_PLAYERS 8
 
 //=============================================================================
-// Undefine any Windows macros that conflict with game code
+// MAKE_FOURCC macro
 //=============================================================================
-#ifdef BIGENDIAN
-#undef BIGENDIAN
-#endif
-#ifdef LITTLEENDIAN
-#undef LITTLEENDIAN
+#ifndef MAKE_FOURCC
+#define MAKE_FOURCC(ch0, ch1, ch2, ch3) \
+    ((DWORD)(BYTE)(ch0) | ((DWORD)(BYTE)(ch1) << 8) | \
+    ((DWORD)(BYTE)(ch2) << 16) | ((DWORD)(BYTE)(ch3) << 24))
 #endif
 
 //=============================================================================
-// extraX64.h types (MUST come before Minecraft.World includes)
+// ESavePlatform enum (from Minecraft.World/FileHeader.h)
 //=============================================================================
-typedef unsigned char byte;
-typedef ULONGLONG PlayerUID;
-typedef ULONGLONG GameSessionUID;
+enum ESavePlatform {
+    SAVE_FILE_PLATFORM_NONE = MAKE_FOURCC('N', 'O', 'N', 'E'),
+    SAVE_FILE_PLATFORM_X360 = MAKE_FOURCC('X', '3', '6', '0'),
+    SAVE_FILE_PLATFORM_XBONE = MAKE_FOURCC('X', 'B', '1', '_'),
+    SAVE_FILE_PLATFORM_PS3 = MAKE_FOURCC('P', 'S', '3', '_'),
+    SAVE_FILE_PLATFORM_PS4 = MAKE_FOURCC('P', 'S', '4', '_'),
+    SAVE_FILE_PLATFORM_PSVITA = MAKE_FOURCC('P', 'S', 'V', '_'),
+    SAVE_FILE_PLATFORM_WIN64 = MAKE_FOURCC('W', 'I', 'N', '_'),
+    SAVE_FILE_PLATFORM_LOCAL = SAVE_FILE_PLATFORM_WIN64
+};
 
-// Compression types needed by compression.h
+//=============================================================================
+// Compression stubs (from Minecraft.World/compression.h)
+//=============================================================================
 typedef VOID* XMEMCOMPRESSION_CONTEXT;
 typedef VOID* XMEMDECOMPRESSION_CONTEXT;
 
-// XMem codec types
 typedef enum _XMEMCODEC_TYPE {
     XMEMCODEC_DEFAULT = 0,
     XMEMCODEC_LZX = 1
@@ -138,7 +166,6 @@ typedef struct _XMEMCODEC_PARAMETERS_LZX {
     DWORD CompressionPartitionSize;
 } XMEMCODEC_PARAMETERS_LZX;
 
-// Stub XMem functions
 inline HRESULT XMemCreateCompressionContext(XMEMCODEC_TYPE, const VOID*, DWORD, XMEMCOMPRESSION_CONTEXT*) { return S_OK; }
 inline HRESULT XMemCreateDecompressionContext(XMEMCODEC_TYPE, const VOID*, DWORD, XMEMDECOMPRESSION_CONTEXT*) { return S_OK; }
 inline HRESULT XMemCompress(XMEMCOMPRESSION_CONTEXT, VOID*, SIZE_T*, const VOID*, SIZE_T) { return S_OK; }
@@ -147,27 +174,286 @@ inline void XMemDestroyCompressionContext(XMEMCOMPRESSION_CONTEXT) {}
 inline void XMemDestroyDecompressionContext(XMEMDECOMPRESSION_CONTEXT) {}
 
 //=============================================================================
-// Include core Minecraft.World headers (these are platform-independent)
+// SharedConstants (from Minecraft.World/SharedConstants.h)
 //=============================================================================
-#include "../../Minecraft.World/Definitions.h"
-#include "../../Minecraft.World/class.h"
-#include "../../Minecraft.World/ArrayWithLength.h"
-#include "../../Minecraft.World/SharedConstants.h"
-#include "../../Minecraft.World/Random.h"
-#include "../../Minecraft.World/compression.h"
-#include "../../Minecraft.World/PerformanceTimer.h"
+namespace SharedConstants {
+    const int TICKS_PER_SECOND = 20;
+    const int CHUNK_SIZE = 16;
+    const int SECTION_HEIGHT = 16;
+    const int SECTIONS_PER_CHUNK = 16;
+    const int CHUNK_HEIGHT = 256;
+    const int SEA_LEVEL = 63;
+}
 
 //=============================================================================
-// Additional extraX64.h types (networking)
+// ArrayWithLength template (from Minecraft.World/ArrayWithLength.h)
 //=============================================================================
+template<typename T>
+class ArrayWithLength {
+public:
+    T* data;
+    int length;
 
-// Forward declarations for network types
-class IQNetPlayer;
-class IQNet;
-class IQNetCallbacks;
-class IQNetGameSearch;
+    ArrayWithLength() : data(nullptr), length(0) {}
+    ArrayWithLength(int len) : length(len) {
+        data = len > 0 ? new T[len]() : nullptr;
+    }
+    ~ArrayWithLength() { delete[] data; }
 
-// Network state enum
+    T& operator[](int i) { return data[i]; }
+    const T& operator[](int i) const { return data[i]; }
+    int size() const { return length; }
+    bool empty() const { return length == 0; }
+};
+
+//=============================================================================
+// C4JThread (from Minecraft.World/C4JThread.h)
+//=============================================================================
+class C4JThread {
+public:
+    typedef void* ThreadHandle;
+
+    class Event {
+    public:
+        HANDLE hEvent;
+        Event(bool manual = false, bool initial = false) {
+            hEvent = CreateEvent(NULL, manual ? TRUE : FALSE, initial ? TRUE : FALSE, NULL);
+        }
+        ~Event() { if (hEvent) CloseHandle(hEvent); }
+        void Set() { SetEvent(hEvent); }
+        void Reset() { ResetEvent(hEvent); }
+        void Wait() { WaitForSingleObject(hEvent, INFINITE); }
+        bool Wait(DWORD ms) { return WaitForSingleObject(hEvent, ms) == WAIT_OBJECT_0; }
+    };
+
+    static ThreadHandle Create(int (*func)(void*), void* param) {
+        return (ThreadHandle)CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)func, param, 0, NULL);
+    }
+
+    static void Join(ThreadHandle h) {
+        WaitForSingleObject((HANDLE)h, INFINITE);
+        CloseHandle((HANDLE)h);
+    }
+
+    static void Sleep(int ms) { ::Sleep(ms); }
+};
+
+//=============================================================================
+// Random (from Minecraft.World/Random.h)
+//=============================================================================
+class Random {
+private:
+    __int64 seed;
+public:
+    Random() : seed(0) { setSeed(GetTickCount64()); }
+    Random(__int64 s) : seed(0) { setSeed(s); }
+
+    void setSeed(__int64 s) {
+        seed = (s ^ 0x5DEECE66DLL) & ((1LL << 48) - 1);
+    }
+
+    int next(int bits) {
+        seed = (seed * 0x5DEECE66DLL + 0xBLL) & ((1LL << 48) - 1);
+        return (int)(seed >> (48 - bits));
+    }
+
+    int nextInt() { return next(32); }
+    int nextInt(int bound) {
+        if (bound <= 0) return 0;
+        if ((bound & -bound) == bound) return (int)((bound * (long long)next(31)) >> 31);
+        int bits, val;
+        do {
+            bits = next(31);
+            val = bits % bound;
+        } while (bits - val + (bound - 1) < 0);
+        return val;
+    }
+
+    long long nextLong() { return ((long long)next(32) << 32) + next(32); }
+    float nextFloat() { return next(24) / (float)(1 << 24); }
+    double nextDouble() { return (((long long)next(26) << 27) + next(27)) / (double)(1LL << 53); }
+    bool nextBoolean() { return next(1) != 0; }
+
+    double nextGaussian() {
+        double v1, v2, s;
+        do {
+            v1 = 2 * nextDouble() - 1;
+            v2 = 2 * nextDouble() - 1;
+            s = v1 * v1 + v2 * v2;
+        } while (s >= 1 || s == 0);
+        double mul = sqrt(-2 * log(s) / s);
+        return v1 * mul;
+    }
+};
+
+//=============================================================================
+// PerformanceTimer (from Minecraft.World/PerformanceTimer.h)
+//=============================================================================
+class PerformanceTimer {
+private:
+    LARGE_INTEGER start, freq;
+public:
+    PerformanceTimer() {
+        QueryPerformanceFrequency(&freq);
+        QueryPerformanceCounter(&start);
+    }
+
+    void reset() { QueryPerformanceCounter(&start); }
+
+    double getElapsedSeconds() const {
+        LARGE_INTEGER now;
+        QueryPerformanceCounter(&now);
+        return (double)(now.QuadPart - start.QuadPart) / freq.QuadPart;
+    }
+
+    __int64 getElapsedMilliseconds() const {
+        return (__int64)(getElapsedSeconds() * 1000.0);
+    }
+
+    __int64 getElapsedMicroseconds() const {
+        return (__int64)(getElapsedSeconds() * 1000000.0);
+    }
+};
+
+//=============================================================================
+// Level generation constants and types
+//=============================================================================
+const unsigned int LEVEL_LEGACY_WIDTH = 864;
+const unsigned char HELL_LEVEL_LEGACY_SCALE = 3;
+
+struct LevelGenerationOptions {
+    wstring generatorName;
+    wstring generatorOptions;
+    __int64 seed;
+    bool generateFeatures;
+    bool generateBonusChest;
+    wstring worldType;
+    LevelGenerationOptions() : seed(0), generateFeatures(true), generateBonusChest(false) {}
+};
+
+//=============================================================================
+// Color types
+//=============================================================================
+typedef DWORD eMinecraftColour;
+const eMinecraftColour MC_WHITE = 0xFFFFFFFF;
+const eMinecraftColour MC_BLACK = 0xFF000000;
+
+//=============================================================================
+// Vec3 class
+//=============================================================================
+class Vec3 {
+public:
+    double x, y, z;
+    Vec3() : x(0), y(0), z(0) {}
+    Vec3(double _x, double _y, double _z) : x(_x), y(_y), z(_z) {}
+    Vec3 add(double dx, double dy, double dz) const { return Vec3(x + dx, y + dy, z + dz); }
+    Vec3 subtract(const Vec3& other) const { return Vec3(x - other.x, y - other.y, z - other.z); }
+    double length() const { return sqrt(x*x + y*y + z*z); }
+    Vec3 normalize() const {
+        double len = length();
+        if (len < 0.0001) return Vec3();
+        return Vec3(x / len, y / len, z / len);
+    }
+    double distanceTo(const Vec3& other) const { return subtract(other).length(); }
+    Vec3 scale(double s) const { return Vec3(x * s, y * s, z * s); }
+};
+
+//=============================================================================
+// AABB class (axis-aligned bounding box)
+//=============================================================================
+class AABB {
+public:
+    double minX, minY, minZ;
+    double maxX, maxY, maxZ;
+    AABB() : minX(0), minY(0), minZ(0), maxX(0), maxY(0), maxZ(0) {}
+    AABB(double x1, double y1, double z1, double x2, double y2, double z2)
+        : minX(x1), minY(y1), minZ(z1), maxX(x2), maxY(y2), maxZ(z2) {}
+    AABB expand(double x, double y, double z) const {
+        return AABB(minX - x, minY - y, minZ - z, maxX + x, maxY + y, maxZ + z);
+    }
+    AABB move(double x, double y, double z) const {
+        return AABB(minX + x, minY + y, minZ + z, maxX + x, maxY + y, maxZ + z);
+    }
+    bool intersects(const AABB& other) const {
+        return maxX > other.minX && minX < other.maxX &&
+               maxY > other.minY && minY < other.maxY &&
+               maxZ > other.minZ && minZ < other.maxZ;
+    }
+    bool contains(const Vec3& v) const {
+        return v.x >= minX && v.x <= maxX &&
+               v.y >= minY && v.y <= maxY &&
+               v.z >= minZ && v.z <= maxZ;
+    }
+    Vec3 getCenter() const {
+        return Vec3((minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2);
+    }
+};
+
+//=============================================================================
+// Pos class
+//=============================================================================
+class Pos {
+public:
+    int x, y, z;
+    Pos() : x(0), y(0), z(0) {}
+    Pos(int _x, int _y, int _z) : x(_x), y(_y), z(_z) {}
+    Pos(double _x, double _y, double _z) : x((int)_x), y((int)_y), z((int)_z) {}
+    bool operator==(const Pos& other) const { return x == other.x && y == other.y && z == other.z; }
+    bool operator!=(const Pos& other) const { return !(*this == other); }
+    bool operator<(const Pos& other) const {
+        if (x != other.x) return x < other.x;
+        if (y != other.y) return y < other.y;
+        return z < other.z;
+    }
+    Pos offset(int dx, int dy, int dz) const { return Pos(x + dx, y + dy, z + dz); }
+    Pos above() const { return offset(0, 1, 0); }
+    Pos below() const { return offset(0, -1, 0); }
+    Pos north() const { return offset(0, 0, -1); }
+    Pos south() const { return offset(0, 0, 1); }
+    Pos east() const { return offset(1, 0, 0); }
+    Pos west() const { return offset(-1, 0, 0); }
+    int getX() const { return x; }
+    int getY() const { return y; }
+    int getZ() const { return z; }
+    double distanceTo(const Pos& other) const {
+        double dx = x - other.x;
+        double dy = y - other.y;
+        double dz = z - other.z;
+        return sqrt(dx*dx + dy*dy + dz*dz);
+    }
+};
+
+//=============================================================================
+// Forward declarations for game classes
+//=============================================================================
+class Level;
+class ServerLevel;
+class Chunk;
+class ChunkSource;
+class LevelData;
+class GameRules;
+class Entity;
+class LivingEntity;
+class Mob;
+class Player;
+class ServerPlayer;
+class Item;
+class ItemStack;
+class Container;
+class Packet;
+class Connection;
+class Explosion;
+class LevelType;
+class File;
+
+//=============================================================================
+// ServerLevelArray type
+//=============================================================================
+typedef ArrayWithLength<ServerLevel*> ServerLevelArray;
+
+//=============================================================================
+// IQNet network types
+//=============================================================================
 typedef enum _QNET_STATE {
     QNET_STATE_IDLE,
     QNET_STATE_SESSION_HOSTING,
@@ -181,7 +467,6 @@ typedef enum _QNET_STATE {
     QNET_STATE_SESSION_DELETING
 } QNET_STATE;
 
-// IQNetPlayer stub - represents a network player
 class IQNetPlayer {
 public:
     BYTE GetSmallId() { return 0; }
@@ -204,7 +489,6 @@ public:
     ULONG_PTR GetCustomDataValue() { return 0; }
 };
 
-// IQNet stub - network session manager
 class IQNet {
 public:
     HRESULT AddLocalPlayerByUserIndex(DWORD) { return S_OK; }
@@ -222,7 +506,9 @@ public:
     static IQNetPlayer m_player[4];
 };
 
-// Network constants
+class IQNetCallbacks {};
+class IQNetGameSearch {};
+
 const int QNET_SENDDATA_LOW_PRIORITY = 0;
 const int QNET_SENDDATA_SECONDARY = 0;
 const int QNET_SENDDATA_RELIABLE = 0;
@@ -237,7 +523,9 @@ const int QNET_USER_MASK_USER2 = 4;
 const int QNET_USER_MASK_USER3 = 8;
 const int INVALID_XUID = 0;
 
-// Xbox-like types needed by network code
+//=============================================================================
+// Xbox-like types
+//=============================================================================
 typedef struct _XOVERLAPPED {} XOVERLAPPED, *PXOVERLAPPED;
 typedef struct _XSESSION_SEARCHRESULT {} XSESSION_SEARCHRESULT, *PXSESSION_SEARCHRESULT;
 typedef struct _XSESSION_SEARCHRESULT_HEADER {
@@ -274,19 +562,17 @@ typedef struct _XUSER_SIGNIN_INFO {
     DWORD dwGuestNumber;
 } XUSER_SIGNIN_INFO, *PXUSER_SIGNIN_INFO;
 
-// User info constants
 const int XUSER_NAME_SIZE = 32;
 #define XUSER_GET_SIGNIN_INFO_ONLINE_XUID_ONLY 0x00000001
 #define XUSER_GET_SIGNIN_INFO_OFFLINE_XUID_ONLY 0x00000002
 
 inline DWORD XUserGetSigninInfo(DWORD, DWORD, PXUSER_SIGNIN_INFO) { return 0; }
 
-// Friend list types
 typedef struct _XONLINE_FRIEND {
     PlayerUID xuid;
     CHAR szGamertag[XUSER_NAME_SIZE];
     DWORD dwFriendState;
-    BYTE sessionID[16]; // Use BYTE array instead of forward ref
+    BYTE sessionID[16];
     DWORD dwTitleID;
     FILETIME ftUserTime;
     BYTE xnkidInvite[16];
@@ -294,7 +580,6 @@ typedef struct _XONLINE_FRIEND {
     DWORD cchRichPresence;
 } XONLINE_FRIEND, *PXONLINE_FRIEND;
 
-// Content types
 const int XCONTENT_MAX_DISPLAYNAME_LENGTH = 256;
 const int XCONTENT_MAX_FILENAME_LENGTH = 256;
 typedef int XCONTENTDEVICEID;
@@ -306,18 +591,15 @@ typedef struct _XCONTENT_DATA {
     CHAR szFileName[XCONTENT_MAX_FILENAME_LENGTH];
 } XCONTENT_DATA, *PXCONTENT_DATA;
 
-// Send buffer type
 struct XRNM_SEND_BUFFER {
     DWORD dwDataSize;
     byte *pbyData;
 };
 
-// D3D extras
 const int D3DBLEND_CONSTANTALPHA = 0;
 const int D3DBLEND_INVCONSTANTALPHA = 0;
 const int D3DPT_QUADLIST = 0;
 
-// Language and locale constants
 const int XC_LANGUAGE_ENGLISH = 0x01;
 const int XC_LANGUAGE_JAPANESE = 0x02;
 const int XC_LANGUAGE_GERMAN = 0x03;
@@ -333,14 +615,8 @@ inline DWORD XGetLanguage() { return XC_LANGUAGE_ENGLISH; }
 inline DWORD XGetLocale() { return XC_LOCALE_UNITED_STATES; }
 inline DWORD XEnableGuestSignin(BOOL) { return 0; }
 
-// PIX functions
-inline void PIXAddNamedCounter(int, char*, ...) {}
-inline void PIXSetMarkerDeprecated(int, char*, ...) {}
-
-// Thread helpers
 inline void XSetThreadProcessor(HANDLE, int) {}
 
-// XUI string table stub
 class CXuiStringTable {
 public:
     LPCWSTR Lookup(LPCWSTR) { return L""; }
@@ -349,14 +625,12 @@ public:
     HRESULT Load(LPCWSTR) { return S_OK; }
 };
 
-// Memory functions
 inline void XMemCpy(void* a, const void* b, size_t s) { memcpy(a, b, s); }
 inline void XMemSet(void* a, int t, size_t s) { memset(a, t, s); }
 inline void XMemSet128(void* a, int t, size_t s) { memset(a, t, s); }
 inline void* XPhysicalAlloc(SIZE_T, ULONG_PTR, ULONG_PTR, DWORD) { return nullptr; }
 inline void XPhysicalFree(void*) {}
 
-// D3D vector stub
 class D3DXVECTOR3 {
 public:
     D3DXVECTOR3() : x(0), y(0), z(0), pad(0) {}
@@ -378,10 +652,8 @@ struct INVITE_INFO {
 };
 
 //=============================================================================
-// 4JLibs Stubs - Minimal interfaces for server operation
+// 4JLibs Stubs
 //=============================================================================
-
-// Input Manager Stub
 class CInputManager {
 public:
     void Tick() {}
@@ -393,7 +665,6 @@ public:
 };
 #define InputManager CInputManager::GetInstance()
 
-// Profile Manager Stub
 class CProfileManager {
 public:
     bool IsSignedIn(int) { return true; }
@@ -420,7 +691,6 @@ public:
 };
 #define ProfileManager CProfileManager::GetInstance()
 
-// Render Manager Stub
 class CRenderManager {
 public:
     void StartFrame() {}
@@ -433,7 +703,6 @@ public:
 };
 #define RenderManager CRenderManager::GetInstance()
 
-// Storage Manager Stub
 class CStorageManager {
 public:
     bool GetSaveDisabled() { return false; }
@@ -446,18 +715,8 @@ public:
 #define StorageManager CStorageManager::GetInstance()
 
 //=============================================================================
-// GUI/Rendering Stubs (server doesn't render)
+// GUI/Rendering Stubs
 //=============================================================================
-
-// Forward declarations
-class Textures;
-class Font;
-class Gui;
-class Screen;
-class BufferedImage;
-class ScreenSizeCalculator;
-
-// Textures stub
 class Textures {
 public:
     int loadTexture(const wstring&) { return 0; }
@@ -465,7 +724,6 @@ public:
     void tick() {}
 };
 
-// Font stub
 class Font {
 public:
     void draw(const wstring&, int, int, int) {}
@@ -473,23 +731,21 @@ public:
     int width(const char*) { return 0; }
 };
 
-// Gui stub
 class Gui {
 public:
     void tick() {}
     void clearMessages() {}
 };
 
-// Screen stub
 class Screen {
 public:
     virtual void render(int, int, float) {}
     virtual void tick() {}
     virtual void init() {}
     virtual void removed() {}
+    virtual ~Screen() {}
 };
 
-// ScreenSizeCalculator stub
 class ScreenSizeCalculator {
 public:
     int getWidth() { return 1920; }
@@ -497,28 +753,38 @@ public:
     float getScale() { return 1.0f; }
 };
 
-// BufferedImage stub
 class BufferedImage {
 public:
     int width, height;
     BufferedImage() : width(0), height(0) {}
 };
 
-//=============================================================================
-// Minecraft Client Stubs
-//=============================================================================
+class GameRenderer {};
+class ProgressRenderer {
+public:
+    virtual ~ProgressRenderer() {}
+    virtual void beginProgress(const wstring&) {}
+    virtual void progressStage(const wstring&) {}
+    virtual void progressStagePercentage(int) {}
+    virtual void done() {}
+};
 
-// Forward declare what we need
+class User {
+public:
+    wstring name;
+    User() : name(L"Server") {}
+};
+
+class Options {};
+class TexturePackRepository {};
+
+//=============================================================================
+// Minecraft client stub
+//=============================================================================
 class MultiPlayerLevel;
 class MultiPlayerGameMode;
 class MultiplayerLocalPlayer;
-class GameRenderer;
-class User;
-class Options;
-class TexturePackRepository;
-class ProgressRenderer;
 
-// Minimal Minecraft class stub for server
 class Minecraft {
 public:
     ProgressRenderer* progressRenderer;
@@ -556,10 +822,8 @@ public:
 };
 
 //=============================================================================
-// App and UI Stubs
-//=============================================================================
-
 // Game host options enum
+//=============================================================================
 enum eGameHostOption {
     eGameHostOption_GameType = 0,
     eGameHostOption_Difficulty,
@@ -576,7 +840,6 @@ enum eGameHostOption {
     eGameHostOption_Max
 };
 
-// XUI Server Actions
 enum eXuiServerAction {
     eXuiServerAction_None = 0,
     eXuiServerAction_SaveGame,
@@ -586,7 +849,9 @@ enum eXuiServerAction {
     eXuiServerAction_DropItem,
 };
 
-// Forward declare GameRuleManager
+//=============================================================================
+// CMinecraftApp stub
+//=============================================================================
 class GameRuleManager {
 public:
     void loadCurrentGameRules() {}
@@ -594,7 +859,6 @@ public:
     void saveToFile() {}
 };
 
-// Minimal CMinecraftApp stub for server
 class CMinecraftApp {
 public:
     GameRuleManager m_gameRules;
@@ -646,7 +910,9 @@ public:
 
 extern CMinecraftApp app;
 
-// UI stub
+//=============================================================================
+// CUI stub
+//=============================================================================
 class CUI {
 public:
     void tick() {}
@@ -667,7 +933,7 @@ public:
 #define ui CUI::GetInstance()
 
 //=============================================================================
-// Telemetry Stub
+// Telemetry stub
 //=============================================================================
 class CTelemetryManager {
 public:
@@ -691,12 +957,12 @@ namespace ShutdownManager {
 }
 
 //=============================================================================
-// Memory Tracking Stub
+// Memory tracking
 //=============================================================================
 inline void MemSect(int) {}
 
 //=============================================================================
-// String resources stub
+// String resource IDs
 //=============================================================================
 #define IDS_PROGRESS_INITIALISING_SERVER 1001
 #define IDS_PROGRESS_GENERATING_SPAWN_AREA 1002
@@ -704,135 +970,10 @@ inline void MemSect(int) {}
 #define IDS_PROGRESS_SAVING_CHUNKS 1004
 
 //=============================================================================
-// MAKE_FOURCC macro (needed by FileHeader.h)
+// Game class stubs (minimal implementations)
 //=============================================================================
-#ifndef MAKE_FOURCC
-#define MAKE_FOURCC(ch0, ch1, ch2, ch3) \
-    ((DWORD)(BYTE)(ch0) | ((DWORD)(BYTE)(ch1) << 8) | \
-    ((DWORD)(BYTE)(ch2) << 16) | ((DWORD)(BYTE)(ch3) << 24))
-#endif
 
-//=============================================================================
-// ESavePlatform enum (needed by MinecraftServer.h)
-//=============================================================================
-enum ESavePlatform {
-    SAVE_FILE_PLATFORM_NONE = MAKE_FOURCC('N', 'O', 'N', 'E'),
-    SAVE_FILE_PLATFORM_X360 = MAKE_FOURCC('X', '3', '6', '0'),
-    SAVE_FILE_PLATFORM_XBONE = MAKE_FOURCC('X', 'B', '1', '_'),
-    SAVE_FILE_PLATFORM_PS3 = MAKE_FOURCC('P', 'S', '3', '_'),
-    SAVE_FILE_PLATFORM_PS4 = MAKE_FOURCC('P', 'S', '4', '_'),
-    SAVE_FILE_PLATFORM_PSVITA = MAKE_FOURCC('P', 'S', 'V', '_'),
-    SAVE_FILE_PLATFORM_WIN64 = MAKE_FOURCC('W', 'I', 'N', '_'),
-    SAVE_FILE_PLATFORM_LOCAL = SAVE_FILE_PLATFORM_WIN64
-};
-
-//=============================================================================
-// Level generation types (needed by MinecraftServer.h)
-//=============================================================================
-struct LevelGenerationOptions {
-    wstring generatorName;
-    wstring generatorOptions;
-    __int64 seed;
-    bool generateFeatures;
-    bool generateBonusChest;
-    wstring worldType;
-    LevelGenerationOptions() : seed(0), generateFeatures(true), generateBonusChest(false) {}
-};
-
-// Constants needed by MinecraftServer.h
-const unsigned int LEVEL_LEGACY_WIDTH = 864;
-const unsigned char HELL_LEVEL_LEGACY_SCALE = 3;
-
-//=============================================================================
-// Color types (needed by MaterialColor.h, biome.h)
-//=============================================================================
-typedef DWORD eMinecraftColour;
-const eMinecraftColour MC_WHITE = 0xFFFFFFFF;
-const eMinecraftColour MC_BLACK = 0xFF000000;
-
-//=============================================================================
-// Position classes (needed throughout Minecraft.World)
-//=============================================================================
-class Pos {
-public:
-    int x, y, z;
-    Pos() : x(0), y(0), z(0) {}
-    Pos(int _x, int _y, int _z) : x(_x), y(_y), z(_z) {}
-    Pos(double _x, double _y, double _z) : x((int)_x), y((int)_y), z((int)_z) {}
-    bool operator==(const Pos& other) const { return x == other.x && y == other.y && z == other.z; }
-    bool operator!=(const Pos& other) const { return !(*this == other); }
-    bool operator<(const Pos& other) const {
-        if (x != other.x) return x < other.x;
-        if (y != other.y) return y < other.y;
-        return z < other.z;
-    }
-    Pos offset(int dx, int dy, int dz) const { return Pos(x + dx, y + dy, z + dz); }
-    Pos above() const { return offset(0, 1, 0); }
-    Pos below() const { return offset(0, -1, 0); }
-    Pos north() const { return offset(0, 0, -1); }
-    Pos south() const { return offset(0, 0, 1); }
-    Pos east() const { return offset(1, 0, 0); }
-    Pos west() const { return offset(-1, 0, 0); }
-    double distanceTo(const Pos& other) const {
-        double dx = x - other.x;
-        double dy = y - other.y;
-        double dz = z - other.z;
-        return sqrt(dx*dx + dy*dy + dz*dz);
-    }
-    int getX() const { return x; }
-    int getY() const { return y; }
-    int getZ() const { return z; }
-};
-
-//=============================================================================
-// Container class (needed by ChestTile.h)
-//=============================================================================
-class ItemStack;
-class Container {
-public:
-    virtual ~Container() {}
-    virtual int getContainerSize() { return 0; }
-    virtual ItemStack* getItem(int) { return nullptr; }
-    virtual void setItem(int, ItemStack*) {}
-    virtual void clearContent() {}
-    virtual bool isEmpty() { return true; }
-};
-
-//=============================================================================
-// Connection class (needed by PlayerList.h)
-//=============================================================================
-class Packet;
-class Connection {
-public:
-    virtual ~Connection() {}
-    virtual void send(Packet*) {}
-    virtual bool isConnected() { return false; }
-    virtual void disconnect(const wstring&) {}
-};
-
-//=============================================================================
-// Explosion class (needed by Tile.h)
-//=============================================================================
-class Level;
-class Entity;
-class Explosion {
-public:
-    Level* level;
-    Entity* source;
-    double x, y, z;
-    float radius;
-    bool fire;
-    bool smoke;
-    Explosion(Level* l, Entity* e, double _x, double _y, double _z, float r)
-        : level(l), source(e), x(_x), y(_y), z(_z), radius(r), fire(false), smoke(true) {}
-    void explode() {}
-    void finalizeExplosion(bool) {}
-};
-
-//=============================================================================
-// ItemStack class stub
-//=============================================================================
-class Item;
+// ItemStack
 class ItemStack {
 public:
     Item* item;
@@ -846,58 +987,18 @@ public:
     Item* getItem() const { return item; }
 };
 
-//=============================================================================
-// Vec3 class (needed by various files)
-//=============================================================================
-class Vec3 {
+// Container
+class Container {
 public:
-    double x, y, z;
-    Vec3() : x(0), y(0), z(0) {}
-    Vec3(double _x, double _y, double _z) : x(_x), y(_y), z(_z) {}
-    Vec3 add(double dx, double dy, double dz) const { return Vec3(x + dx, y + dy, z + dz); }
-    Vec3 subtract(const Vec3& other) const { return Vec3(x - other.x, y - other.y, z - other.z); }
-    double length() const { return sqrt(x*x + y*y + z*z); }
-    Vec3 normalize() const {
-        double len = length();
-        if (len < 0.0001) return Vec3();
-        return Vec3(x / len, y / len, z / len);
-    }
-    double distanceTo(const Vec3& other) const {
-        return subtract(other).length();
-    }
+    virtual ~Container() {}
+    virtual int getContainerSize() { return 0; }
+    virtual ItemStack* getItem(int) { return nullptr; }
+    virtual void setItem(int, ItemStack*) {}
+    virtual void clearContent() {}
+    virtual bool isEmpty() { return true; }
 };
 
-//=============================================================================
-// AABB class (axis-aligned bounding box)
-//=============================================================================
-class AABB {
-public:
-    double minX, minY, minZ;
-    double maxX, maxY, maxZ;
-    AABB() : minX(0), minY(0), minZ(0), maxX(0), maxY(0), maxZ(0) {}
-    AABB(double x1, double y1, double z1, double x2, double y2, double z2)
-        : minX(x1), minY(y1), minZ(z1), maxX(x2), maxY(y2), maxZ(z2) {}
-    AABB expand(double x, double y, double z) const {
-        return AABB(minX - x, minY - y, minZ - z, maxX + x, maxY + y, maxZ + z);
-    }
-    AABB move(double x, double y, double z) const {
-        return AABB(minX + x, minY + y, minZ + z, maxX + x, maxY + y, maxZ + z);
-    }
-    bool intersects(const AABB& other) const {
-        return maxX > other.minX && minX < other.maxX &&
-               maxY > other.minY && minY < other.maxY &&
-               maxZ > other.minZ && minZ < other.maxZ;
-    }
-    bool contains(const Vec3& v) const {
-        return v.x >= minX && v.x <= maxX &&
-               v.y >= minY && v.y <= maxY &&
-               v.z >= minZ && v.z <= maxZ;
-    }
-};
-
-//=============================================================================
-// Packet class stub
-//=============================================================================
+// Packet
 class Packet {
 public:
     virtual ~Packet() {}
@@ -906,15 +1007,16 @@ public:
     virtual void read(void*) {}
 };
 
-//=============================================================================
-// Entity forward declarations and stubs
-//=============================================================================
-class EntityType;
-class LivingEntity;
-class Mob;
-class Player;
-class ServerPlayer;
+// Connection
+class Connection {
+public:
+    virtual ~Connection() {}
+    virtual void send(Packet*) {}
+    virtual bool isConnected() { return false; }
+    virtual void disconnect(const wstring&) {}
+};
 
+// Entity
 class Entity {
 public:
     double x, y, z;
@@ -944,72 +1046,22 @@ public:
     virtual const wchar_t* getName() const { return L"Entity"; }
 };
 
-//=============================================================================
-// Level class stub (needed by many files)
-//=============================================================================
-class Chunk;
-class ChunkSource;
-class LevelData;
-class GameRules;
-
-class Level {
+// Explosion
+class Explosion {
 public:
-    virtual ~Level() {}
-    virtual Chunk* getChunk(int, int) { return nullptr; }
-    virtual Chunk* getChunkAt(const Pos&) { return nullptr; }
-    virtual int getBlockId(int, int, int) { return 0; }
-    virtual int getBlockId(const Pos&) { return 0; }
-    virtual int getData(int, int, int) { return 0; }
-    virtual bool setBlock(int, int, int, int, int) { return false; }
-    virtual bool setBlock(const Pos&, int, int) { return false; }
-    virtual void tick() {}
-    virtual bool addEntity(Entity*) { return false; }
-    virtual void removeEntity(Entity*) {}
-    virtual vector<Entity*> getEntities(Entity*, const AABB&) { return vector<Entity*>(); }
-    virtual LevelData* getLevelData() { return nullptr; }
-    virtual bool isDay() const { return true; }
-    virtual long getGameTime() const { return 0; }
-    virtual long getDayTime() const { return 0; }
-    virtual void setDayTime(long) {}
-    virtual int getSeaLevel() const { return 64; }
-    virtual int getHeight() const { return 256; }
-    virtual bool hasChunkAt(int, int) { return false; }
-    virtual int getSkyDarken() const { return 0; }
-    virtual float getSunAngle(float) const { return 0.0f; }
-    virtual int getMoonPhase() const { return 0; }
-    virtual bool isRaining() const { return false; }
-    virtual bool isThundering() const { return false; }
-    virtual void setRainLevel(float) {}
-    virtual void setThunderLevel(float) {}
-    virtual GameRules* getGameRules() { return nullptr; }
-    virtual void explode(Entity*, double, double, double, float, bool, bool) {}
-};
-
-//=============================================================================
-// Chunk class stub
-//=============================================================================
-class Chunk {
-public:
-    int x, z;
     Level* level;
-    bool loaded;
-    bool modified;
-
-    Chunk() : x(0), z(0), level(nullptr), loaded(false), modified(false) {}
-    Chunk(Level* l, int _x, int _z) : x(_x), z(_z), level(l), loaded(false), modified(false) {}
-
-    int getBlockId(int, int, int) { return 0; }
-    int getData(int, int, int) { return 0; }
-    bool setBlock(int, int, int, int, int) { return false; }
-    int getHeight(int, int) { return 64; }
-    bool isEmpty() const { return true; }
-    bool isLoaded() const { return loaded; }
-    void markModified() { modified = true; }
+    Entity* source;
+    double x, y, z;
+    float radius;
+    bool fire;
+    bool smoke;
+    Explosion(Level* l, Entity* e, double _x, double _y, double _z, float r)
+        : level(l), source(e), x(_x), y(_y), z(_z), radius(r), fire(false), smoke(true) {}
+    void explode() {}
+    void finalizeExplosion(bool) {}
 };
 
-//=============================================================================
-// GameRules class stub
-//=============================================================================
+// GameRules
 class GameRules {
 public:
     bool getBoolean(const wstring&) const { return true; }
@@ -1018,9 +1070,7 @@ public:
     void setInt(const wstring&, int) {}
 };
 
-//=============================================================================
-// LevelData class stub
-//=============================================================================
+// LevelData
 class LevelData {
 public:
     wstring levelName;
@@ -1059,11 +1109,244 @@ public:
     bool getAllowCommands() const { return allowCommands; }
 };
 
-// Note: NetworkGameInitData is defined in MinecraftServer.h
+// Chunk
+class Chunk {
+public:
+    int x, z;
+    Level* level;
+    bool loaded;
+    bool modified;
+
+    Chunk() : x(0), z(0), level(nullptr), loaded(false), modified(false) {}
+    Chunk(Level* l, int _x, int _z) : x(_x), z(_z), level(l), loaded(false), modified(false) {}
+
+    int getBlockId(int, int, int) { return 0; }
+    int getData(int, int, int) { return 0; }
+    bool setBlock(int, int, int, int, int) { return false; }
+    int getHeight(int, int) { return 64; }
+    bool isEmpty() const { return true; }
+    bool isLoaded() const { return loaded; }
+    void markModified() { modified = true; }
+};
+
+// Level
+class Level {
+public:
+    virtual ~Level() {}
+    virtual Chunk* getChunk(int, int) { return nullptr; }
+    virtual Chunk* getChunkAt(const Pos&) { return nullptr; }
+    virtual int getBlockId(int, int, int) { return 0; }
+    virtual int getBlockId(const Pos&) { return 0; }
+    virtual int getData(int, int, int) { return 0; }
+    virtual bool setBlock(int, int, int, int, int) { return false; }
+    virtual bool setBlock(const Pos&, int, int) { return false; }
+    virtual void tick() {}
+    virtual bool addEntity(Entity*) { return false; }
+    virtual void removeEntity(Entity*) {}
+    virtual vector<Entity*> getEntities(Entity*, const AABB&) { return vector<Entity*>(); }
+    virtual LevelData* getLevelData() { return nullptr; }
+    virtual bool isDay() const { return true; }
+    virtual long getGameTime() const { return 0; }
+    virtual long getDayTime() const { return 0; }
+    virtual void setDayTime(long) {}
+    virtual int getSeaLevel() const { return 64; }
+    virtual int getHeight() const { return 256; }
+    virtual bool hasChunkAt(int, int) { return false; }
+    virtual int getSkyDarken() const { return 0; }
+    virtual float getSunAngle(float) const { return 0.0f; }
+    virtual int getMoonPhase() const { return 0; }
+    virtual bool isRaining() const { return false; }
+    virtual bool isThundering() const { return false; }
+    virtual void setRainLevel(float) {}
+    virtual void setThunderLevel(float) {}
+    virtual GameRules* getGameRules() { return nullptr; }
+    virtual void explode(Entity*, double, double, double, float, bool, bool) {}
+};
+
+// ServerLevel
+class ServerLevel : public Level {
+public:
+    ServerLevel() {}
+    virtual ~ServerLevel() {}
+};
+
+// File class
+class File {
+public:
+    wstring path;
+    File() {}
+    File(const wstring& p) : path(p) {}
+    bool exists() const { return false; }
+    bool isDirectory() const { return false; }
+    bool mkdir() const { return false; }
+    bool mkdirs() const { return false; }
+    wstring getPath() const { return path; }
+    wstring getName() const { return path; }
+};
+
+// ConsoleInputSource
+class ConsoleInputSource {
+public:
+    virtual ~ConsoleInputSource() {}
+    virtual void handleConsoleInput(const wstring& msg, ConsoleInputSource* source) {}
+};
+
+// ConsoleInput
+class ConsoleInput {
+public:
+    wstring msg;
+    ConsoleInputSource* source;
+    ConsoleInput(const wstring& m, ConsoleInputSource* s) : msg(m), source(s) {}
+};
 
 //=============================================================================
-// Include GameNetworkManager (needed for server)
+// INetworkPlayer (interface for network players)
 //=============================================================================
-#include "../Common/Network/GameNetworkManager.h"
+class INetworkPlayer {
+public:
+    virtual ~INetworkPlayer() {}
+    virtual PlayerUID GetXuid() const { return 0; }
+    virtual const wchar_t* GetGamertag() const { return L"Player"; }
+    virtual bool IsLocal() const { return false; }
+    virtual bool IsHost() const { return false; }
+    virtual int GetUserIndex() const { return 0; }
+    virtual BYTE GetSmallId() const { return 0; }
+    virtual void SendPacket(Packet*) {}
+};
+
+//=============================================================================
+// Platform Network Manager Stub
+//=============================================================================
+class CPlatformNetworkManager {
+public:
+    enum eJoinFailedReason { eJoinFailed_General };
+    static CPlatformNetworkManager* GetInstance() { static CPlatformNetworkManager inst; return &inst; }
+};
+
+class CPlatformNetworkManagerStub : public CPlatformNetworkManager {};
+
+//=============================================================================
+// Session Info
+//=============================================================================
+struct FriendSessionInfo {
+    SessionID sessionId;
+    wstring hostGamertag;
+    PlayerUID hostXuid;
+    int playerCount;
+    int maxPlayers;
+    bool isPrivate;
+    FriendSessionInfo() : hostXuid(0), playerCount(0), maxPlayers(8), isPrivate(false) {}
+};
+
+//=============================================================================
+// CGameNetworkManager stub
+//=============================================================================
+class ClientConnection;
+
+class CGameNetworkManager {
+public:
+    enum eJoinGameResult { JOINGAME_SUCCESS, JOINGAME_FAIL_GENERAL, JOINGAME_FAIL_SERVER_FULL };
+
+    CGameNetworkManager() {}
+    void Initialise() {}
+    void Terminate() {}
+    void DoWork() {}
+    bool _RunNetworkGame(LPVOID) { return false; }
+    bool StartNetworkGame(Minecraft*, LPVOID) { return false; }
+    int CorrectErrorIDS(int IDS) { return IDS; }
+
+    static int GetLocalPlayerMask(int playerIndex) { return 1 << playerIndex; }
+    int GetPlayerCount() { return 0; }
+    int GetOnlinePlayerCount() { return 0; }
+    bool AddLocalPlayerByUserIndex(int) { return false; }
+    bool RemoveLocalPlayerByUserIndex(int) { return false; }
+    INetworkPlayer* GetLocalPlayerByUserIndex(int) { return nullptr; }
+    INetworkPlayer* GetPlayerByIndex(int) { return nullptr; }
+    INetworkPlayer* GetPlayerByXuid(PlayerUID) { return nullptr; }
+    INetworkPlayer* GetPlayerBySmallId(unsigned char) { return nullptr; }
+    wstring GetDisplayNameByGamertag(wstring gt) { return gt; }
+    INetworkPlayer* GetHostPlayer() { return nullptr; }
+    void RegisterPlayerChangedCallback(int, void (*)(void*, INetworkPlayer*, bool), void*) {}
+    void UnRegisterPlayerChangedCallback(int, void (*)(void*, INetworkPlayer*, bool), void*) {}
+    void HandleSignInChange() {}
+    bool ShouldMessageForFullSession() { return false; }
+
+    bool IsInSession() { return false; }
+    bool IsInGameplay() { return false; }
+    bool IsLeavingGame() { return false; }
+    bool IsReadyToPlayOrIdle() { return true; }
+
+    bool SetLocalGame(bool) { return true; }
+    bool IsLocalGame() { return true; }
+    void SetPrivateGame(bool) {}
+    bool IsPrivateGame() { return false; }
+    void HostGame(int, bool, bool, unsigned char = 8, unsigned char = 0) {}
+    bool IsHost() { return true; }
+    bool IsInStatsEnabledSession() { return false; }
+
+    bool SessionHasSpace(unsigned int = 1) { return true; }
+    vector<FriendSessionInfo*>* GetSessionList(int, int, bool) { return nullptr; }
+    bool GetGameSessionInfo(int, SessionID, FriendSessionInfo*) { return false; }
+    void SetSessionsUpdatedCallback(void (*)(LPVOID), LPVOID) {}
+    void GetFullFriendSessionInfo(FriendSessionInfo*, void (*)(bool, void*), void*) {}
+    void ForceFriendsSessionRefresh() {}
+
+    bool JoinGameFromInviteInfo(int, int, const INVITE_INFO*) { return false; }
+    eJoinGameResult JoinGame(FriendSessionInfo*, int) { return JOINGAME_SUCCESS; }
+    static void CancelJoinGame(LPVOID) {}
+    bool LeaveGame(bool) { return true; }
+    static int JoinFromInvite_SignInReturned(void*, bool, int) { return 0; }
+    void UpdateAndSetGameSessionData(INetworkPlayer* = nullptr) {}
+    void SendInviteGUI(int) {}
+    void ResetLeavingGame() {}
+
+    bool IsNetworkThreadRunning() { return false; }
+    static int RunNetworkGameThreadProc(void*) { return 0; }
+    static int ServerThreadProc(void*) { return 0; }
+#ifdef _DEDICATED_SERVER
+    static int DedicatedServerMain(void*) { return 0; }
+#endif
+    static int ExitAndJoinFromInviteThreadProc(void*) { return 0; }
+    static void _LeaveGame() {}
+    static int ChangeSessionTypeThreadProc(void*) { return 0; }
+
+    void SystemFlagSet(INetworkPlayer*, int) {}
+    bool SystemFlagGet(INetworkPlayer*, int) { return false; }
+
+    void ServerReadyCreate(bool) {}
+    void ServerReady() {}
+    void ServerReadyWait() {}
+    void ServerReadyDestroy() {}
+    bool ServerReadyValid() { return false; }
+
+    void ServerStoppedCreate(bool) {}
+    void ServerStopped() {}
+    void ServerStoppedWait() {}
+    void ServerStoppedDestroy() {}
+    bool ServerStoppedValid() { return false; }
+
+    wstring GatherStats() { return L""; }
+    void renderQueueMeter() {}
+    wstring GatherRTTStats() { return L""; }
+
+    static const int messageQueue_length = 512;
+    static __int64 messageQueue[messageQueue_length];
+    static const int byteQueue_length = 512;
+    static __int64 byteQueue[byteQueue_length];
+    static int messageQueuePos;
+
+    void FakeLocalPlayerJoined() {}
+};
+
+extern CGameNetworkManager g_NetworkManager;
+
+//=============================================================================
+// Socket class stub
+//=============================================================================
+class Socket {
+public:
+    static void Initialise(void*) {}
+    static void Shutdown() {}
+};
 
 // End of stdafx_server.h
