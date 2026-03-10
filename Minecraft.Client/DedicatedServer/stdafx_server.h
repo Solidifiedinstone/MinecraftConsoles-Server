@@ -122,6 +122,30 @@ typedef unsigned char byte;
 typedef ULONGLONG PlayerUID;
 typedef ULONGLONG GameSessionUID;
 
+// Compression types needed by compression.h
+typedef VOID* XMEMCOMPRESSION_CONTEXT;
+typedef VOID* XMEMDECOMPRESSION_CONTEXT;
+
+// XMem codec types
+typedef enum _XMEMCODEC_TYPE {
+    XMEMCODEC_DEFAULT = 0,
+    XMEMCODEC_LZX = 1
+} XMEMCODEC_TYPE;
+
+typedef struct _XMEMCODEC_PARAMETERS_LZX {
+    DWORD Flags;
+    DWORD WindowSize;
+    DWORD CompressionPartitionSize;
+} XMEMCODEC_PARAMETERS_LZX;
+
+// Stub XMem functions
+inline HRESULT XMemCreateCompressionContext(XMEMCODEC_TYPE, const VOID*, DWORD, XMEMCOMPRESSION_CONTEXT*) { return S_OK; }
+inline HRESULT XMemCreateDecompressionContext(XMEMCODEC_TYPE, const VOID*, DWORD, XMEMDECOMPRESSION_CONTEXT*) { return S_OK; }
+inline HRESULT XMemCompress(XMEMCOMPRESSION_CONTEXT, VOID*, SIZE_T*, const VOID*, SIZE_T) { return S_OK; }
+inline HRESULT XMemDecompress(XMEMDECOMPRESSION_CONTEXT, VOID*, SIZE_T*, const VOID*, SIZE_T) { return S_OK; }
+inline void XMemDestroyCompressionContext(XMEMCOMPRESSION_CONTEXT) {}
+inline void XMemDestroyDecompressionContext(XMEMDECOMPRESSION_CONTEXT) {}
+
 //=============================================================================
 // Include core Minecraft.World headers (these are platform-independent)
 //=============================================================================
@@ -136,6 +160,82 @@ typedef ULONGLONG GameSessionUID;
 //=============================================================================
 // Additional extraX64.h types (networking)
 //=============================================================================
+
+// Forward declarations for network types
+class IQNetPlayer;
+class IQNet;
+class IQNetCallbacks;
+class IQNetGameSearch;
+
+// Network state enum
+typedef enum _QNET_STATE {
+    QNET_STATE_IDLE,
+    QNET_STATE_SESSION_HOSTING,
+    QNET_STATE_SESSION_JOINING,
+    QNET_STATE_GAME_LOBBY,
+    QNET_STATE_SESSION_REGISTERING,
+    QNET_STATE_SESSION_STARTING,
+    QNET_STATE_GAME_PLAY,
+    QNET_STATE_SESSION_ENDING,
+    QNET_STATE_SESSION_LEAVING,
+    QNET_STATE_SESSION_DELETING
+} QNET_STATE;
+
+// IQNetPlayer stub - represents a network player
+class IQNetPlayer {
+public:
+    BYTE GetSmallId() { return 0; }
+    void SendData(IQNetPlayer*, const void*, DWORD, DWORD) {}
+    bool IsSameSystem(IQNetPlayer*) { return true; }
+    DWORD GetSendQueueSize(IQNetPlayer*, DWORD) { return 0; }
+    DWORD GetCurrentRtt() { return 0; }
+    bool IsHost() { return true; }
+    bool IsGuest() { return false; }
+    bool IsLocal() { return true; }
+    PlayerUID GetXuid() { return 0; }
+    LPCWSTR GetGamertag() { return L"Server"; }
+    int GetSessionIndex() { return 0; }
+    bool IsTalking() { return false; }
+    bool IsMutedByLocalUser(DWORD) { return false; }
+    bool HasVoice() { return false; }
+    bool HasCamera() { return false; }
+    int GetUserIndex() { return 0; }
+    void SetCustomDataValue(ULONG_PTR) {}
+    ULONG_PTR GetCustomDataValue() { return 0; }
+};
+
+// IQNet stub - network session manager
+class IQNet {
+public:
+    HRESULT AddLocalPlayerByUserIndex(DWORD) { return S_OK; }
+    IQNetPlayer* GetHostPlayer() { return nullptr; }
+    IQNetPlayer* GetLocalPlayerByUserIndex(DWORD) { return nullptr; }
+    IQNetPlayer* GetPlayerByIndex(DWORD) { return nullptr; }
+    IQNetPlayer* GetPlayerBySmallId(BYTE) { return nullptr; }
+    IQNetPlayer* GetPlayerByXuid(PlayerUID) { return nullptr; }
+    DWORD GetPlayerCount() { return 0; }
+    QNET_STATE GetState() { return QNET_STATE_IDLE; }
+    bool IsHost() { return true; }
+    HRESULT JoinGameFromInviteInfo(DWORD, DWORD, const void*) { return S_OK; }
+    void HostGame() {}
+    void EndGame() {}
+    static IQNetPlayer m_player[4];
+};
+
+// Network constants
+const int QNET_SENDDATA_LOW_PRIORITY = 0;
+const int QNET_SENDDATA_SECONDARY = 0;
+const int QNET_SENDDATA_RELIABLE = 0;
+const int QNET_SENDDATA_SEQUENTIAL = 0;
+const int QNET_GETSENDQUEUESIZE_SECONDARY_TYPE = 0;
+const int QNET_GETSENDQUEUESIZE_MESSAGES = 0;
+const int QNET_GETSENDQUEUESIZE_BYTES = 0;
+const int QNET_E_SESSION_FULL = 0;
+const int QNET_USER_MASK_USER0 = 1;
+const int QNET_USER_MASK_USER1 = 2;
+const int QNET_USER_MASK_USER2 = 4;
+const int QNET_USER_MASK_USER3 = 8;
+const int INVALID_XUID = 0;
 
 struct SessionID {
     BYTE data[16];
@@ -496,4 +596,4 @@ struct NetworkGameInitData {
 //=============================================================================
 #include "../Common/Network/GameNetworkManager.h"
 
-#endif // stdafx_server.h
+// End of stdafx_server.h
