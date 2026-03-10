@@ -191,7 +191,7 @@ int wmain(int argc, wchar_t* argv[])
 	IntCache::CreateNewThreadStorage();
 	Compression::UseDefaultThreadStorage();
 	Entity::useSmallIds();
-	Level::enableLightingCache();
+	// Note: Level::enableLightingCache() not needed for headless server
 	Tile::CreateNewThreadStorage();
 
 	// Create and run dedicated server
