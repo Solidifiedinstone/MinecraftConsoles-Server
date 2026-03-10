@@ -149,6 +149,8 @@ typedef XUID GameSessionUID;
 
 void MemSect(int sect);
 
+// 4JLibs platform headers - skip for dedicated server
+#ifndef _DEDICATED_SERVER
 #ifdef _XBOX
 #include "..\Minecraft.Client\xbox\4JLibs\inc\4J_Profile.h"
 #include "..\Minecraft.Client\xbox\4JLibs\inc\4J_Render.h"
@@ -197,6 +199,7 @@ void MemSect(int sect);
 #include "..\Minecraft.Client\Common\XUI\XUI_Scene_Base.h"
 #endif
 #include "..\Minecraft.Client\Common\Consoles_App.h"
+#endif // _DEDICATED_SERVER
 #include "..\Minecraft.Client\Common\Minecraft_Macros.h"
 #include "..\Minecraft.Client\Common\Colours\ColourTable.h"
 

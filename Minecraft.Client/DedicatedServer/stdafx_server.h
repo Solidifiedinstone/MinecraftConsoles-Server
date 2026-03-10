@@ -819,7 +819,6 @@ const eMinecraftColour MC_BLACK = 0xFF000000;
 //=============================================================================
 class LevelGenerationOptions;
 class Connection;
-class Pos;
 class Explosion;
 class Container;
 
@@ -842,6 +841,7 @@ enum ESavePlatform;
 #include "../../Minecraft.World/ArrayWithLength.h"
 #include "../../Minecraft.World/SharedConstants.h"
 #include "../../Minecraft.World/Random.h"
+#include "../../Minecraft.World/Pos.h"
 #include "../../Minecraft.World/compression.h"
 #include "../../Minecraft.World/PerformanceTimer.h"
 #include "../../Minecraft.World/C4JThread.h"
