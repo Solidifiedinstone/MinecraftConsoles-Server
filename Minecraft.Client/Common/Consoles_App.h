@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef _DEDICATED_SERVER
+// Stub CMinecraftApp defined in stdafx_server.h for dedicated server
+#else
+
 using namespace std;
 
 #include "Audio/Consoles_SoundEngine.h"
@@ -935,5 +939,7 @@ private:
 #endif
 };
 
-//singleton 
+//singleton
 //extern CMinecraftApp app;
+
+#endif // _DEDICATED_SERVER

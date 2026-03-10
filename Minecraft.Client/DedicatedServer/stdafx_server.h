@@ -422,7 +422,8 @@ namespace C4JRender {
         eFMT_DXT5,
         eFMT_A8R8G8B8,
         eFMT_R8G8B8,
-        eFMT_A8
+        eFMT_A8,
+        TEXTURE_FORMAT_RxGyBzAw = eFMT_A8R8G8B8
     };
     typedef eTextureFormat TEXTURE_FORMAT;
 }
@@ -434,12 +435,19 @@ namespace C4JStorage {
     enum eStorageFacility {
         eFACILITY_NONE = 0,
         eFACILITY_LOCAL,
-        eFACILITY_REMOTE
+        eFACILITY_REMOTE,
+        eGlobalStorage = eFACILITY_LOCAL
     };
     enum eFileTypeVal {
         eFILE_NONE = 0,
         eFILE_SAVE,
-        eFILE_WORLD
+        eFILE_WORLD,
+        eTMS_FILETYPEVAL = eFILE_NONE
+    };
+    enum EMessageResult {
+        eRESULT_OK = 0,
+        eRESULT_CANCEL,
+        eRESULT_ERROR
     };
     typedef void* PTMSPP_FILEDATA;
 }
