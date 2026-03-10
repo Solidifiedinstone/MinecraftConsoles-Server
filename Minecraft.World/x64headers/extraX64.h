@@ -4,13 +4,16 @@
 #include <string>
 #include <functional>
 
+#ifndef _DEDICATED_SERVER
 #include "..\..\Minecraft.Client\SkinBox.h"
-
+#endif
 
 #include <vector>
 
 #define MULTITHREAD_ENABLE
 
+// Skip type definitions if already defined by stdafx_server.h
+#ifndef _EXTRA_X64_TYPES_DEFINED
 typedef unsigned char byte;
 
 const int XUSER_INDEX_ANY = 255;
@@ -24,8 +27,9 @@ const int XUSER_MAX_COUNT = 4;
 const int MINECRAFT_NET_MAX_PLAYERS = 8;
 #endif
 
+#endif // _EXTRA_X64_TYPES_DEFINED (basic types)
 
-
+// Platform-specific types (always needed)
 #ifdef __ORBIS__
 #include <net.h>
 #include <np/np_npid.h>
@@ -62,6 +66,8 @@ typedef SQRNetworkManager_Vita::PresenceSyncInfo INVITE_INFO;
 typedef ULONGLONG SessionID;
 typedef ULONGLONG GameSessionUID;
 typedef DQRNetworkManager::SessionInfo INVITE_INFO;
+#elif defined _DEDICATED_SERVER
+// Types already defined in stdafx_server.h
 #else
 typedef ULONGLONG PlayerUID;
 typedef ULONGLONG SessionID;
@@ -70,7 +76,7 @@ class INVITE_INFO;
 
 #endif //  __PS3__
 
-#if !(defined _DURANGO || defined __PSVITA__)
+#if !(defined _DURANGO || defined __PSVITA__ || defined _DEDICATED_SERVER)
 typedef PlayerUID *PPlayerUID;
 #endif
 typedef struct _XUIOBJ* HXUIOBJ;
@@ -84,7 +90,9 @@ typedef struct _XUIDC* HXUIDC;
 // void GetLocalTime(SYSTEMTIME *time);
 // #endif
 
+#ifndef _DEDICATED_SERVER
 bool IsEqualXUID(PlayerUID a, PlayerUID b);
+#endif
 
 using namespace std;
 
@@ -127,11 +135,13 @@ private:
 	CRITICAL_SECTION m_cs;
 };
 
+#ifndef _DEDICATED_SERVER
 void XMemCpy(void *a, const void *b, size_t s);
 void XMemSet(void *a, int t, size_t s);
 void XMemSet128(void *a, int t, size_t s);
 void *XPhysicalAlloc(SIZE_T a, ULONG_PTR  b, ULONG_PTR c, DWORD d);
 void XPhysicalFree(void *a);
+#endif
 
 class DLCManager;
 
@@ -192,8 +202,11 @@ const int XN_SYS_STORAGEDEVICESCHANGED = 3;
 #define VK_PAD_RTHUMB_DOWNRIGHT         0x5836
 #define VK_PAD_RTHUMB_DOWNLEFT          0x5837
 
+#ifndef _DEDICATED_SERVER
 const int XUSER_NAME_SIZE = 32;
+#endif
 
+#ifndef _DEDICATED_SERVER
 class IQNetPlayer
 {
 public:
@@ -205,7 +218,7 @@ public:
 	bool IsHost();
 	bool IsGuest();
 	bool IsLocal();
-	PlayerUID GetXuid();	
+	PlayerUID GetXuid();
 	LPCWSTR GetGamertag();
 	int GetSessionIndex();
 	bool IsTalking();
@@ -218,7 +231,9 @@ public:
 private:
 	ULONG_PTR m_customData;
 };
+#endif // _DEDICATED_SERVER
 
+#ifndef _DEDICATED_SERVER
 const int QNET_GETSENDQUEUESIZE_SECONDARY_TYPE = 0;
 const int QNET_GETSENDQUEUESIZE_MESSAGES = 0;
 const int QNET_GETSENDQUEUESIZE_BYTES = 0;
@@ -313,6 +328,7 @@ public:
 
 	static IQNetPlayer m_player[4];
 };
+#endif // _DEDICATED_SERVER
 
 #ifdef _DURANGO
 // 4J Stu - We don't want to be doing string conversions at runtime for timing instrumentation, so do this instead
@@ -320,22 +336,24 @@ public:
 #define PIXEndNamedEvent() PIXEndEvent()
 #define PIXSetMarkerDeprecated(a, b, ...) PIXSetMarker(a, L ## b, __VA_ARGS__)
 #define PIXAddNamedCounter(a, b) PIXReportCounter( L ## b, a)
-#else
+#elif !defined(_DEDICATED_SERVER)
 void PIXAddNamedCounter(int a, char *b, ...);
 void PIXBeginNamedEvent(int a, char *b, ...);
 void PIXEndNamedEvent();
 void PIXSetMarkerDeprecated(int a, char *b, ...);
 #endif
 
+#ifndef _DEDICATED_SERVER
 void XSetThreadProcessor(HANDLE a, int b);
 //BOOL XCloseHandle(HANDLE a);
 
 const int QNET_SENDDATA_LOW_PRIORITY = 0;
 const int QNET_SENDDATA_SECONDARY = 0;
+#endif
 
 #if defined(__PS3__) || defined(__ORBIS__) || defined(_DURANGO) || defined(__PSVITA__)
 #define INVALID_XUID PlayerUID()
-#else
+#elif !defined(_DEDICATED_SERVER)
 const int INVALID_XUID = 0;
 #endif
 // const int MOJANG_DATA = 0;
@@ -346,6 +364,7 @@ const int INVALID_XUID = 0;
 //     HRESULT *pStringResult;
 // } STRING_VERIFY_RESPONSE;
 
+#ifndef _DEDICATED_SERVER
 const int XCONTENT_MAX_DISPLAYNAME_LENGTH = 256;
 const int XCONTENT_MAX_FILENAME_LENGTH = 256;
 typedef int XCONTENTDEVICEID;
@@ -359,6 +378,7 @@ typedef struct _XCONTENT_DATA
     CHAR szFileName[XCONTENT_MAX_FILENAME_LENGTH];
 } XCONTENT_DATA, *PXCONTENT_DATA;
 #endif //__PS3__
+#endif // _DEDICATED_SERVER
 
 static const int XMARKETPLACE_CONTENT_ID_LEN = 4;
 
@@ -401,6 +421,7 @@ typedef enum
 } XMARKETPLACE_OFFERING_TYPE;
 #endif // _DURANGO
 
+#ifndef _DEDICATED_SERVER
 const int QNET_SENDDATA_RELIABLE = 0;
 const int QNET_SENDDATA_SEQUENTIAL = 0;
 
@@ -437,8 +458,9 @@ public:
 	void Clear();
 	HRESULT Load(LPCWSTR szId);
 };
+#endif // _DEDICATED_SERVER
 
-#if !defined(__ORBIS__) && !defined(_XBOX_ONE)
+#if !defined(__ORBIS__) && !defined(_XBOX_ONE) && !defined(_DEDICATED_SERVER)
 typedef VOID * XMEMDECOMPRESSION_CONTEXT;
 typedef VOID * XMEMCOMPRESSION_CONTEXT;
 
@@ -542,6 +564,7 @@ typedef struct {
 // const int XC_LANGUAGE_MEXICANSPANISH=12;
 // #endif
 
+#ifndef _DEDICATED_SERVER
 // matching Xbox 360
 const int XC_LANGUAGE_ENGLISH             =0x01;
 const int XC_LANGUAGE_JAPANESE            =0x02;
@@ -639,3 +662,4 @@ public:
 #define QNET_USER_MASK_USER1 2
 #define QNET_USER_MASK_USER2 4
 #define QNET_USER_MASK_USER3 8
+#endif // _DEDICATED_SERVER

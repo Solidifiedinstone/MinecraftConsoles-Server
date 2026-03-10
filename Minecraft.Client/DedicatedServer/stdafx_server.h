@@ -47,17 +47,29 @@
 #include <mutex>
 #include <thread>
 
-// Type definitions that must come BEFORE Minecraft.World headers
+// Type definitions
 #ifndef __uint64
 typedef unsigned long long __uint64;
 #endif
 
-#ifndef byte
-typedef unsigned char byte;
-#endif
+// Define types normally provided by extraX64.h
+// These MUST be defined before any code that uses them
+#ifndef _EXTRA_X64_TYPES_DEFINED
+#define _EXTRA_X64_TYPES_DEFINED
 
+typedef unsigned char byte;
 typedef ULONGLONG PlayerUID;
-typedef ULONGLONG GameSessionUID;
+typedef PlayerUID GameSessionUID;
+typedef PlayerUID *PPlayerUID;
+
+const int XUSER_INDEX_ANY = 255;
+const int XUSER_INDEX_FOCUS = 254;
+const int XUSER_MAX_COUNT = 4;
+const int MINECRAFT_NET_MAX_PLAYERS = 8;
+
+inline bool IsEqualXUID(PlayerUID a, PlayerUID b) { return a == b; }
+
+#endif // _EXTRA_X64_TYPES_DEFINED
 
 // Macros
 #define AUTO_VAR(_var, _val) auto _var = _val
@@ -98,11 +110,7 @@ inline float XMVectorGetX(XMVECTOR v) { return v.x; }
 inline float XMVectorGetY(XMVECTOR v) { return v.y; }
 inline float XMVectorGetZ(XMVECTOR v) { return v.z; }
 
-typedef void* ID3D11Device;
-typedef void* ID3D11DeviceContext;
-typedef void* ID3D11RenderTargetView;
-typedef void* ID3D11Texture2D;
-typedef void* ID3D11ShaderResourceView;
+// D3D11 types come from d3d11.h if included, or are forward declared elsewhere
 
 //=============================================================================
 // PIX Stubs
@@ -114,18 +122,8 @@ inline void PIXAddNamedCounter(int, char*, ...) {}
 inline void PIXSetMarkerDeprecated(int, char*, ...) {}
 
 //=============================================================================
-// Platform Constants
+// Platform Constants (already defined above with other extraX64.h types)
 //=============================================================================
-#ifndef XUSER_MAX_COUNT
-#define XUSER_MAX_COUNT 4
-#endif
-#ifndef XUSER_INDEX_ANY
-#define XUSER_INDEX_ANY 255
-#endif
-#ifndef XUSER_INDEX_FOCUS
-#define XUSER_INDEX_FOCUS 254
-#endif
-#define MINECRAFT_NET_MAX_PLAYERS 8
 
 //=============================================================================
 // Compression stubs (extraX64.h equivalent)
@@ -806,13 +804,8 @@ public:
 extern CGameNetworkManager g_NetworkManager;
 
 //=============================================================================
-// Socket class stub
+// Socket class is defined in Minecraft.World/Socket.h - don't stub it here
 //=============================================================================
-class Socket {
-public:
-    static void Initialise(void*) {}
-    static void Shutdown() {}
-};
 
 //=============================================================================
 // Color type (needed before Minecraft.World headers)
@@ -837,27 +830,9 @@ const unsigned int LEVEL_LEGACY_WIDTH = 864;
 const unsigned char HELL_LEVEL_LEGACY_SCALE = 3;
 
 //=============================================================================
-// MAKE_FOURCC macro for ESavePlatform
+// ESavePlatform is defined in Minecraft.World/FileHeader.h - forward declare only
 //=============================================================================
-#ifndef MAKE_FOURCC
-#define MAKE_FOURCC(ch0, ch1, ch2, ch3) \
-    ((DWORD)(BYTE)(ch0) | ((DWORD)(BYTE)(ch1) << 8) | \
-    ((DWORD)(BYTE)(ch2) << 16) | ((DWORD)(BYTE)(ch3) << 24))
-#endif
-
-//=============================================================================
-// ESavePlatform enum (from Minecraft.World/FileHeader.h)
-//=============================================================================
-enum ESavePlatform {
-    SAVE_FILE_PLATFORM_NONE = MAKE_FOURCC('N', 'O', 'N', 'E'),
-    SAVE_FILE_PLATFORM_X360 = MAKE_FOURCC('X', '3', '6', '0'),
-    SAVE_FILE_PLATFORM_XBONE = MAKE_FOURCC('X', 'B', '1', '_'),
-    SAVE_FILE_PLATFORM_PS3 = MAKE_FOURCC('P', 'S', '3', '_'),
-    SAVE_FILE_PLATFORM_PS4 = MAKE_FOURCC('P', 'S', '4', '_'),
-    SAVE_FILE_PLATFORM_PSVITA = MAKE_FOURCC('P', 'S', 'V', '_'),
-    SAVE_FILE_PLATFORM_WIN64 = MAKE_FOURCC('W', 'I', 'N', '_'),
-    SAVE_FILE_PLATFORM_LOCAL = SAVE_FILE_PLATFORM_WIN64
-};
+enum ESavePlatform;
 
 //=============================================================================
 // Include Minecraft.World headers in correct order

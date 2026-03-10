@@ -20,7 +20,9 @@ typedef unsigned __int64 __uint64;
 #include <malloc.h>
 #include <tchar.h>
 // TODO: reference additional headers your program requires here
+#ifndef _DEDICATED_SERVER
 #include <d3d11.h>
+#endif
 #endif
 
 #ifdef _DURANGO
