@@ -822,11 +822,48 @@ const eMinecraftColour MC_WHITE = 0xFFFFFFFF;
 const eMinecraftColour MC_BLACK = 0xFF000000;
 
 //=============================================================================
+// Forward declarations needed by Minecraft.Client headers
+//=============================================================================
+class LevelGenerationOptions;
+class Connection;
+class Pos;
+class Explosion;
+class Container;
+
+//=============================================================================
+// Constants needed by MinecraftServer.h
+//=============================================================================
+const unsigned int LEVEL_LEGACY_WIDTH = 864;
+const unsigned char HELL_LEVEL_LEGACY_SCALE = 3;
+
+//=============================================================================
+// MAKE_FOURCC macro for ESavePlatform
+//=============================================================================
+#ifndef MAKE_FOURCC
+#define MAKE_FOURCC(ch0, ch1, ch2, ch3) \
+    ((DWORD)(BYTE)(ch0) | ((DWORD)(BYTE)(ch1) << 8) | \
+    ((DWORD)(BYTE)(ch2) << 16) | ((DWORD)(BYTE)(ch3) << 24))
+#endif
+
+//=============================================================================
+// ESavePlatform enum (from Minecraft.World/FileHeader.h)
+//=============================================================================
+enum ESavePlatform {
+    SAVE_FILE_PLATFORM_NONE = MAKE_FOURCC('N', 'O', 'N', 'E'),
+    SAVE_FILE_PLATFORM_X360 = MAKE_FOURCC('X', '3', '6', '0'),
+    SAVE_FILE_PLATFORM_XBONE = MAKE_FOURCC('X', 'B', '1', '_'),
+    SAVE_FILE_PLATFORM_PS3 = MAKE_FOURCC('P', 'S', '3', '_'),
+    SAVE_FILE_PLATFORM_PS4 = MAKE_FOURCC('P', 'S', '4', '_'),
+    SAVE_FILE_PLATFORM_PSVITA = MAKE_FOURCC('P', 'S', 'V', '_'),
+    SAVE_FILE_PLATFORM_WIN64 = MAKE_FOURCC('W', 'I', 'N', '_'),
+    SAVE_FILE_PLATFORM_LOCAL = SAVE_FILE_PLATFORM_WIN64
+};
+
+//=============================================================================
 // Include Minecraft.World headers in correct order
 // These provide game types (Vec3, AABB, Entity, Level, Random, etc.)
 //=============================================================================
 #include "../../Minecraft.World/Definitions.h"
-#include "../../Minecraft.World/class.h"
 #include "../../Minecraft.World/ArrayWithLength.h"
 #include "../../Minecraft.World/SharedConstants.h"
 #include "../../Minecraft.World/Random.h"
