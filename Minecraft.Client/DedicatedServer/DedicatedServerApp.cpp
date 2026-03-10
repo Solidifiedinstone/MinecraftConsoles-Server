@@ -162,7 +162,7 @@ void DedicatedServerApp::RequestShutdown()
 	MinecraftServer::HaltServer();
 }
 
-DWORD DedicatedServerApp::GetGameHostOption(eDedicatedGameHostOption option) const
+DWORD DedicatedServerApp::GetGameHostOption(eGameHostOption option) const
 {
 	if (option >= eGameHostOption_Max)
 		return 0;
@@ -185,7 +185,7 @@ DWORD DedicatedServerApp::GetGameHostOption(eDedicatedGameHostOption option) con
 	return m_hostOptions[option];
 }
 
-void DedicatedServerApp::SetGameHostOption(eDedicatedGameHostOption option, DWORD value)
+void DedicatedServerApp::SetGameHostOption(eGameHostOption option, DWORD value)
 {
 	if (option >= eGameHostOption_Max)
 		return;

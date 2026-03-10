@@ -49,23 +49,7 @@ struct DedicatedServerConfig
 	}
 };
 
-// Game host options enum (subset needed for server)
-enum eDedicatedGameHostOption
-{
-	eGameHostOption_GameType = 0,
-	eGameHostOption_Difficulty,
-	eGameHostOption_PvP,
-	eGameHostOption_FireSpreads,
-	eGameHostOption_TNT,
-	eGameHostOption_Structures,
-	eGameHostOption_BonusChest,
-	eGameHostOption_LevelType,
-	eGameHostOption_All,
-	eGameHostOption_FriendsOfFriends,
-	eGameHostOption_Gamertags,
-	eGameHostOption_HasBeenInCreative,
-	eGameHostOption_Max
-};
+// Note: eGameHostOption enum is defined in stdafx_server.h
 
 class DedicatedServerApp
 {
@@ -80,8 +64,8 @@ public:
 	void RequestShutdown();
 
 	// Get/set game host options
-	DWORD GetGameHostOption(eDedicatedGameHostOption option) const;
-	void SetGameHostOption(eDedicatedGameHostOption option, DWORD value);
+	DWORD GetGameHostOption(eGameHostOption option) const;
+	void SetGameHostOption(eGameHostOption option, DWORD value);
 
 	// Progress renderer for headless mode
 	HeadlessProgressRenderer* GetProgressRenderer() const { return m_pProgressRenderer; }
@@ -126,7 +110,5 @@ private:
 	CRITICAL_SECTION m_commandCS;
 };
 
-// Global app reference for compatibility
-#ifdef _DEDICATED_SERVER
-extern DedicatedServerApp& app;
-#endif
+// Note: Global 'app' (CMinecraftApp) is defined in stdafx_server.h
+// Use DedicatedServerApp::GetInstance() for server-specific functionality
