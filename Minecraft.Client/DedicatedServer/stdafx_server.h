@@ -704,20 +704,362 @@ inline void MemSect(int) {}
 #define IDS_PROGRESS_SAVING_CHUNKS 1004
 
 //=============================================================================
-// Network structures
+// MAKE_FOURCC macro (needed by FileHeader.h)
 //=============================================================================
-struct NetworkGameInitData {
-    __int64 seed;
-    bool findSeed;
-    DWORD settings;
-    void* levelGen;
-    int texturePackId;
-    int xzSize;
-    int hellScale;
+#ifndef MAKE_FOURCC
+#define MAKE_FOURCC(ch0, ch1, ch2, ch3) \
+    ((DWORD)(BYTE)(ch0) | ((DWORD)(BYTE)(ch1) << 8) | \
+    ((DWORD)(BYTE)(ch2) << 16) | ((DWORD)(BYTE)(ch3) << 24))
+#endif
 
-    NetworkGameInitData() : seed(0), findSeed(true), settings(0), levelGen(nullptr),
-                            texturePackId(0), xzSize(0), hellScale(3) {}
+//=============================================================================
+// ESavePlatform enum (needed by MinecraftServer.h)
+//=============================================================================
+enum ESavePlatform {
+    SAVE_FILE_PLATFORM_NONE = MAKE_FOURCC('N', 'O', 'N', 'E'),
+    SAVE_FILE_PLATFORM_X360 = MAKE_FOURCC('X', '3', '6', '0'),
+    SAVE_FILE_PLATFORM_XBONE = MAKE_FOURCC('X', 'B', '1', '_'),
+    SAVE_FILE_PLATFORM_PS3 = MAKE_FOURCC('P', 'S', '3', '_'),
+    SAVE_FILE_PLATFORM_PS4 = MAKE_FOURCC('P', 'S', '4', '_'),
+    SAVE_FILE_PLATFORM_PSVITA = MAKE_FOURCC('P', 'S', 'V', '_'),
+    SAVE_FILE_PLATFORM_WIN64 = MAKE_FOURCC('W', 'I', 'N', '_'),
+    SAVE_FILE_PLATFORM_LOCAL = SAVE_FILE_PLATFORM_WIN64
 };
+
+//=============================================================================
+// Level generation types (needed by MinecraftServer.h)
+//=============================================================================
+struct LevelGenerationOptions {
+    wstring generatorName;
+    wstring generatorOptions;
+    __int64 seed;
+    bool generateFeatures;
+    bool generateBonusChest;
+    wstring worldType;
+    LevelGenerationOptions() : seed(0), generateFeatures(true), generateBonusChest(false) {}
+};
+
+// Constants needed by MinecraftServer.h
+const unsigned int LEVEL_LEGACY_WIDTH = 864;
+const unsigned char HELL_LEVEL_LEGACY_SCALE = 3;
+
+//=============================================================================
+// Color types (needed by MaterialColor.h, biome.h)
+//=============================================================================
+typedef DWORD eMinecraftColour;
+const eMinecraftColour MC_WHITE = 0xFFFFFFFF;
+const eMinecraftColour MC_BLACK = 0xFF000000;
+
+//=============================================================================
+// Position classes (needed throughout Minecraft.World)
+//=============================================================================
+class Pos {
+public:
+    int x, y, z;
+    Pos() : x(0), y(0), z(0) {}
+    Pos(int _x, int _y, int _z) : x(_x), y(_y), z(_z) {}
+    Pos(double _x, double _y, double _z) : x((int)_x), y((int)_y), z((int)_z) {}
+    bool operator==(const Pos& other) const { return x == other.x && y == other.y && z == other.z; }
+    bool operator!=(const Pos& other) const { return !(*this == other); }
+    bool operator<(const Pos& other) const {
+        if (x != other.x) return x < other.x;
+        if (y != other.y) return y < other.y;
+        return z < other.z;
+    }
+    Pos offset(int dx, int dy, int dz) const { return Pos(x + dx, y + dy, z + dz); }
+    Pos above() const { return offset(0, 1, 0); }
+    Pos below() const { return offset(0, -1, 0); }
+    Pos north() const { return offset(0, 0, -1); }
+    Pos south() const { return offset(0, 0, 1); }
+    Pos east() const { return offset(1, 0, 0); }
+    Pos west() const { return offset(-1, 0, 0); }
+    double distanceTo(const Pos& other) const {
+        double dx = x - other.x;
+        double dy = y - other.y;
+        double dz = z - other.z;
+        return sqrt(dx*dx + dy*dy + dz*dz);
+    }
+    int getX() const { return x; }
+    int getY() const { return y; }
+    int getZ() const { return z; }
+};
+
+//=============================================================================
+// Container class (needed by ChestTile.h)
+//=============================================================================
+class ItemStack;
+class Container {
+public:
+    virtual ~Container() {}
+    virtual int getContainerSize() { return 0; }
+    virtual ItemStack* getItem(int) { return nullptr; }
+    virtual void setItem(int, ItemStack*) {}
+    virtual void clearContent() {}
+    virtual bool isEmpty() { return true; }
+};
+
+//=============================================================================
+// Connection class (needed by PlayerList.h)
+//=============================================================================
+class Packet;
+class Connection {
+public:
+    virtual ~Connection() {}
+    virtual void send(Packet*) {}
+    virtual bool isConnected() { return false; }
+    virtual void disconnect(const wstring&) {}
+};
+
+//=============================================================================
+// Explosion class (needed by Tile.h)
+//=============================================================================
+class Level;
+class Entity;
+class Explosion {
+public:
+    Level* level;
+    Entity* source;
+    double x, y, z;
+    float radius;
+    bool fire;
+    bool smoke;
+    Explosion(Level* l, Entity* e, double _x, double _y, double _z, float r)
+        : level(l), source(e), x(_x), y(_y), z(_z), radius(r), fire(false), smoke(true) {}
+    void explode() {}
+    void finalizeExplosion(bool) {}
+};
+
+//=============================================================================
+// ItemStack class stub
+//=============================================================================
+class Item;
+class ItemStack {
+public:
+    Item* item;
+    int count;
+    int damage;
+    ItemStack() : item(nullptr), count(0), damage(0) {}
+    ItemStack(Item* i, int c, int d = 0) : item(i), count(c), damage(d) {}
+    bool isEmpty() const { return count <= 0 || item == nullptr; }
+    int getCount() const { return count; }
+    int getDamageValue() const { return damage; }
+    Item* getItem() const { return item; }
+};
+
+//=============================================================================
+// Vec3 class (needed by various files)
+//=============================================================================
+class Vec3 {
+public:
+    double x, y, z;
+    Vec3() : x(0), y(0), z(0) {}
+    Vec3(double _x, double _y, double _z) : x(_x), y(_y), z(_z) {}
+    Vec3 add(double dx, double dy, double dz) const { return Vec3(x + dx, y + dy, z + dz); }
+    Vec3 subtract(const Vec3& other) const { return Vec3(x - other.x, y - other.y, z - other.z); }
+    double length() const { return sqrt(x*x + y*y + z*z); }
+    Vec3 normalize() const {
+        double len = length();
+        if (len < 0.0001) return Vec3();
+        return Vec3(x / len, y / len, z / len);
+    }
+    double distanceTo(const Vec3& other) const {
+        return subtract(other).length();
+    }
+};
+
+//=============================================================================
+// AABB class (axis-aligned bounding box)
+//=============================================================================
+class AABB {
+public:
+    double minX, minY, minZ;
+    double maxX, maxY, maxZ;
+    AABB() : minX(0), minY(0), minZ(0), maxX(0), maxY(0), maxZ(0) {}
+    AABB(double x1, double y1, double z1, double x2, double y2, double z2)
+        : minX(x1), minY(y1), minZ(z1), maxX(x2), maxY(y2), maxZ(z2) {}
+    AABB expand(double x, double y, double z) const {
+        return AABB(minX - x, minY - y, minZ - z, maxX + x, maxY + y, maxZ + z);
+    }
+    AABB move(double x, double y, double z) const {
+        return AABB(minX + x, minY + y, minZ + z, maxX + x, maxY + y, maxZ + z);
+    }
+    bool intersects(const AABB& other) const {
+        return maxX > other.minX && minX < other.maxX &&
+               maxY > other.minY && minY < other.maxY &&
+               maxZ > other.minZ && minZ < other.maxZ;
+    }
+    bool contains(const Vec3& v) const {
+        return v.x >= minX && v.x <= maxX &&
+               v.y >= minY && v.y <= maxY &&
+               v.z >= minZ && v.z <= maxZ;
+    }
+};
+
+//=============================================================================
+// Packet class stub
+//=============================================================================
+class Packet {
+public:
+    virtual ~Packet() {}
+    virtual int getId() const { return 0; }
+    virtual void write(void*) {}
+    virtual void read(void*) {}
+};
+
+//=============================================================================
+// Entity forward declarations and stubs
+//=============================================================================
+class EntityType;
+class LivingEntity;
+class Mob;
+class Player;
+class ServerPlayer;
+
+class Entity {
+public:
+    double x, y, z;
+    double xo, yo, zo;
+    double motionX, motionY, motionZ;
+    float yRot, xRot;
+    bool onGround;
+    bool removed;
+    int tickCount;
+    Level* level;
+
+    Entity() : x(0), y(0), z(0), xo(0), yo(0), zo(0),
+               motionX(0), motionY(0), motionZ(0),
+               yRot(0), xRot(0), onGround(false), removed(false),
+               tickCount(0), level(nullptr) {}
+    virtual ~Entity() {}
+
+    virtual void tick() {}
+    virtual void setPos(double _x, double _y, double _z) { x = _x; y = _y; z = _z; }
+    virtual void setRot(float y, float p) { yRot = y; xRot = p; }
+    virtual bool isAlive() const { return !removed; }
+    virtual void remove() { removed = true; }
+    virtual AABB getBoundingBox() const { return AABB(x - 0.3, y, z - 0.3, x + 0.3, y + 1.8, z + 0.3); }
+    virtual Vec3 getPosition() const { return Vec3(x, y, z); }
+    virtual bool hurt(Entity*, float) { return false; }
+    virtual int getId() const { return 0; }
+    virtual const wchar_t* getName() const { return L"Entity"; }
+};
+
+//=============================================================================
+// Level class stub (needed by many files)
+//=============================================================================
+class Chunk;
+class ChunkSource;
+class LevelData;
+class GameRules;
+
+class Level {
+public:
+    virtual ~Level() {}
+    virtual Chunk* getChunk(int, int) { return nullptr; }
+    virtual Chunk* getChunkAt(const Pos&) { return nullptr; }
+    virtual int getBlockId(int, int, int) { return 0; }
+    virtual int getBlockId(const Pos&) { return 0; }
+    virtual int getData(int, int, int) { return 0; }
+    virtual bool setBlock(int, int, int, int, int) { return false; }
+    virtual bool setBlock(const Pos&, int, int) { return false; }
+    virtual void tick() {}
+    virtual bool addEntity(Entity*) { return false; }
+    virtual void removeEntity(Entity*) {}
+    virtual vector<Entity*> getEntities(Entity*, const AABB&) { return vector<Entity*>(); }
+    virtual LevelData* getLevelData() { return nullptr; }
+    virtual bool isDay() const { return true; }
+    virtual long getGameTime() const { return 0; }
+    virtual long getDayTime() const { return 0; }
+    virtual void setDayTime(long) {}
+    virtual int getSeaLevel() const { return 64; }
+    virtual int getHeight() const { return 256; }
+    virtual bool hasChunkAt(int, int) { return false; }
+    virtual int getSkyDarken() const { return 0; }
+    virtual float getSunAngle(float) const { return 0.0f; }
+    virtual int getMoonPhase() const { return 0; }
+    virtual bool isRaining() const { return false; }
+    virtual bool isThundering() const { return false; }
+    virtual void setRainLevel(float) {}
+    virtual void setThunderLevel(float) {}
+    virtual GameRules* getGameRules() { return nullptr; }
+    virtual void explode(Entity*, double, double, double, float, bool, bool) {}
+};
+
+//=============================================================================
+// Chunk class stub
+//=============================================================================
+class Chunk {
+public:
+    int x, z;
+    Level* level;
+    bool loaded;
+    bool modified;
+
+    Chunk() : x(0), z(0), level(nullptr), loaded(false), modified(false) {}
+    Chunk(Level* l, int _x, int _z) : x(_x), z(_z), level(l), loaded(false), modified(false) {}
+
+    int getBlockId(int, int, int) { return 0; }
+    int getData(int, int, int) { return 0; }
+    bool setBlock(int, int, int, int, int) { return false; }
+    int getHeight(int, int) { return 64; }
+    bool isEmpty() const { return true; }
+    bool isLoaded() const { return loaded; }
+    void markModified() { modified = true; }
+};
+
+//=============================================================================
+// GameRules class stub
+//=============================================================================
+class GameRules {
+public:
+    bool getBoolean(const wstring&) const { return true; }
+    int getInt(const wstring&) const { return 0; }
+    void setBoolean(const wstring&, bool) {}
+    void setInt(const wstring&, int) {}
+};
+
+//=============================================================================
+// LevelData class stub
+//=============================================================================
+class LevelData {
+public:
+    wstring levelName;
+    __int64 seed;
+    long gameTime;
+    long dayTime;
+    int spawnX, spawnY, spawnZ;
+    int gameType;
+    bool hardcore;
+    bool allowCommands;
+    int difficulty;
+    bool raining;
+    bool thundering;
+    int rainTime;
+    int thunderTime;
+
+    LevelData() : seed(0), gameTime(0), dayTime(0),
+                  spawnX(0), spawnY(64), spawnZ(0),
+                  gameType(0), hardcore(false), allowCommands(false),
+                  difficulty(2), raining(false), thundering(false),
+                  rainTime(0), thunderTime(0) {}
+
+    const wstring& getLevelName() const { return levelName; }
+    __int64 getSeed() const { return seed; }
+    long getGameTime() const { return gameTime; }
+    long getDayTime() const { return dayTime; }
+    int getSpawnX() const { return spawnX; }
+    int getSpawnY() const { return spawnY; }
+    int getSpawnZ() const { return spawnZ; }
+    void setSpawn(int x, int y, int z) { spawnX = x; spawnY = y; spawnZ = z; }
+    int getGameType() const { return gameType; }
+    void setGameType(int gt) { gameType = gt; }
+    int getDifficulty() const { return difficulty; }
+    void setDifficulty(int d) { difficulty = d; }
+    bool isHardcore() const { return hardcore; }
+    bool getAllowCommands() const { return allowCommands; }
+};
+
+// Note: NetworkGameInitData is defined in MinecraftServer.h
 
 //=============================================================================
 // Include GameNetworkManager (needed for server)
