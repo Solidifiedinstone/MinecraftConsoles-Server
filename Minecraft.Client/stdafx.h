@@ -174,10 +174,12 @@ typedef XUID GameSessionUID;
 	#include "Durango\4JLibs\inc\4J_Render.h"
 	#include "Durango\4JLibs\inc\4J_Storage.h"
 #elif defined _WINDOWS64
-	#include "Windows64\4JLibs\inc\4J_Input.h"	
+	#ifndef _DEDICATED_SERVER
+	#include "Windows64\4JLibs\inc\4J_Input.h"
 	#include "Windows64\4JLibs\inc\4J_Profile.h"
 	#include "Windows64\4JLibs\inc\4J_Render.h"
 	#include "Windows64\4JLibs\inc\4J_Storage.h"
+	#endif
 #elif defined __PSVITA__
 	#include "PSVita\4JLibs\inc\4J_Input.h"	
 	#include "PSVita\4JLibs\inc\4J_Profile.h"
