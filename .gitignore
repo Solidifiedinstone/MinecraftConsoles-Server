@@ -1,0 +1,44 @@
+# Build outputs
+Debug/
+Release/
+Debug_Server/
+Release_Server/
+x64/
+Win32/
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.ncb
+*.sdf
+*.opensdf
+*.aps
+ipch/
+*.VC.db
+*.VC.opendb
+
+# Object files
+*.obj
+*.o
+*.pch
+*.pdb
+*.ilk
+*.exp
+*.lib
+
+# Executables
+*.exe
+*.dll
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor backup files
+*~
+*.swp
+*.bak

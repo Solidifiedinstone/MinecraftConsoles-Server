@@ -1,0 +1,78 @@
+name: Build Dedicated Server
+
+on:
+  push:
+    branches: [ main, master, dedicated-server ]
+    paths:
+      - 'Minecraft.Client/**'
+      - 'Minecraft.World/**'
+      - '.github/workflows/build-server.yml'
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Add MSBuild to PATH
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Setup Windows SDK
+      uses: fbactions/setup-winsdk@v1
+      with:
+        winsdk-build-version: 19041
+
+    - name: Build Minecraft.World (Release x64)
+      run: |
+        msbuild Minecraft.World/Minecraft.World.vcxproj /p:Configuration=Release /p:Platform=x64 /t:Build
+      continue-on-error: true
+
+    - name: Build Dedicated Server (Release x64)
+      run: |
+        msbuild Minecraft.Client/Minecraft.Server.vcxproj /p:Configuration=Release /p:Platform=x64 /t:Build
+
+    - name: Upload Server Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: Minecraft.Server
+        path: |
+          Release_Server/Minecraft.Server.exe
+          Release_Server/*.dll
+        if-no-files-found: warn
+
+  build-debug:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Add MSBuild to PATH
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Setup Windows SDK
+      uses: fbactions/setup-winsdk@v1
+      with:
+        winsdk-build-version: 19041
+
+    - name: Build Minecraft.World (Debug x64)
+      run: |
+        msbuild Minecraft.World/Minecraft.World.vcxproj /p:Configuration=Debug /p:Platform=x64 /t:Build
+      continue-on-error: true
+
+    - name: Build Dedicated Server (Debug x64)
+      run: |
+        msbuild Minecraft.Client/Minecraft.Server.vcxproj /p:Configuration=Debug /p:Platform=x64 /t:Build
+
+    - name: Upload Debug Server Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: Minecraft.Server-Debug
+        path: |
+          Debug_Server/Minecraft.Server.exe
+          Debug_Server/*.dll
+          Debug_Server/*.pdb
+        if-no-files-found: warn
