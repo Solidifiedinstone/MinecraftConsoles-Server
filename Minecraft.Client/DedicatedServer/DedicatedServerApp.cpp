@@ -27,11 +27,8 @@
 // Static instance
 DedicatedServerApp* DedicatedServerApp::s_pInstance = nullptr;
 
-// Global app reference
-#ifdef _DEDICATED_SERVER
-static DedicatedServerApp s_dedicatedApp;
-DedicatedServerApp& app = s_dedicatedApp;
-#endif
+// Note: The global 'app' (CMinecraftApp) is defined in stdafx.cpp
+// DedicatedServerApp uses a separate instance pattern
 
 // Log helper
 static void ServerLog(const wchar_t* level, const wchar_t* message)
@@ -99,7 +96,7 @@ bool DedicatedServerApp::Initialize(const DedicatedServerConfig& config)
 	// Create headless progress renderer
 	m_pProgressRenderer = new HeadlessProgressRenderer();
 
-	// Set host options from config
+	// Set host options from config - both local and on global app
 	m_hostOptions[eGameHostOption_GameType] = config.gamemode;
 	m_hostOptions[eGameHostOption_Difficulty] = config.difficulty;
 	m_hostOptions[eGameHostOption_PvP] = config.pvp ? 1 : 0;
@@ -110,6 +107,16 @@ bool DedicatedServerApp::Initialize(const DedicatedServerConfig& config)
 		m_hostOptions[eGameHostOption_LevelType] = 1;
 	else
 		m_hostOptions[eGameHostOption_LevelType] = 0;
+
+	// Sync to global app (CMinecraftApp) so server code can access via app.GetGameHostOption()
+	app.SetGameHostOption(eGameHostOption_GameType, m_hostOptions[eGameHostOption_GameType]);
+	app.SetGameHostOption(eGameHostOption_Difficulty, m_hostOptions[eGameHostOption_Difficulty]);
+	app.SetGameHostOption(eGameHostOption_PvP, m_hostOptions[eGameHostOption_PvP]);
+	app.SetGameHostOption(eGameHostOption_FireSpreads, m_hostOptions[eGameHostOption_FireSpreads]);
+	app.SetGameHostOption(eGameHostOption_TNT, m_hostOptions[eGameHostOption_TNT]);
+	app.SetGameHostOption(eGameHostOption_Structures, m_hostOptions[eGameHostOption_Structures]);
+	app.SetGameHostOption(eGameHostOption_BonusChest, m_hostOptions[eGameHostOption_BonusChest]);
+	app.SetGameHostOption(eGameHostOption_LevelType, m_hostOptions[eGameHostOption_LevelType]);
 
 	// Initialize socket system
 	Socket::Initialise(nullptr);

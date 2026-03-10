@@ -51,9 +51,9 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_DEDICATED_SERVER;_WINDOWS64;_CONSOLE;WIN32_LEAN_AND_MEAN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)..\Minecraft.World;$(ProjectDir)..\Minecraft.World\x64headers;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)DedicatedServer;$(ProjectDir)..\Minecraft.World;$(ProjectDir)..\Minecraft.World\x64headers;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile>stdafx_server.h</PrecompiledHeaderFile>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
@@ -71,9 +71,9 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_DEDICATED_SERVER;_WINDOWS64;_CONSOLE;WIN32_LEAN_AND_MEAN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)..\Minecraft.World;$(ProjectDir)..\Minecraft.World\x64headers;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)DedicatedServer;$(ProjectDir)..\Minecraft.World;$(ProjectDir)..\Minecraft.World\x64headers;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile>stdafx_server.h</PrecompiledHeaderFile>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
@@ -109,7 +109,7 @@
     <ClCompile Include="EntityTracker.cpp" />
     <ClCompile Include="Settings.cpp" />
     <ClCompile Include="ServerCommandDispatcher.cpp" />
-    <ClCompile Include="stdafx.cpp">
+    <ClCompile Include="DedicatedServer\stdafx.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
   </ItemGroup>
@@ -140,7 +140,7 @@
     <ClInclude Include="PlayerChunkMap.h" />
     <ClInclude Include="EntityTracker.h" />
     <ClInclude Include="Settings.h" />
-    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="DedicatedServer\stdafx_server.h" />
   </ItemGroup>
 
   <!-- Note: This project requires the Minecraft.World library to be built first -->

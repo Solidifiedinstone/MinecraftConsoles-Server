@@ -147,9 +147,7 @@ static UserStub g_userStub;
 static OptionsStub g_optionsStub;
 static TexturePackRepositoryStub g_skinsStub;
 
-// PIX event stubs (for performance instrumentation that won't work headless)
-// Note: PIXBeginNamedEvent and PIXEndNamedEvent are defined in stdafx_server.h
-void PIXReportCounter(const wchar_t*, float) {}
+// PIX event stubs are already defined in stdafx_server.h
 
 // Storage manager stub
 class StorageManagerStub
@@ -233,27 +231,6 @@ static UIStub g_uiStub;
 // XEnable functions stub
 void XEnableGuestSignin(BOOL) {}
 
-// Shutdown manager stubs
-namespace ShutdownManager
-{
-	enum Thread { eServerThread, ePostProcessThread };
-	void HasStarted(Thread) {}
-	void HasFinished(Thread) {}
-	bool ShouldRun(Thread) { return true; }
-}
-
-// Telemetry manager stub
-class TelemetryManagerStub
-{
-public:
-	void RecordPlayerSessionStart(int) {}
-	void RecordPlayerSessionExit(int, int) {}
-	void RecordLevelStart(int, int, int, int, int, int) {}
-	int GenerateMultiplayerInstanceId() { return 0; }
-	void SetMultiplayerInstanceId(int) {}
-};
-
-static TelemetryManagerStub g_telemetryManagerStub;
-TelemetryManagerStub* TelemetryManager = &g_telemetryManagerStub;
+// Note: ShutdownManager and TelemetryManager are already defined in stdafx_server.h
 
 #endif // _DEDICATED_SERVER
