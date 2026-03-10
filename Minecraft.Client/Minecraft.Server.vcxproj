@@ -52,8 +52,8 @@
       <PreprocessorDefinitions>_DEBUG;_DEDICATED_SERVER;_WINDOWS64;_CONSOLE;WIN32_LEAN_AND_MEAN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)DedicatedServer;$(ProjectDir)..\Minecraft.World;$(ProjectDir)..\Minecraft.World\x64headers;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>stdafx_server.h</PrecompiledHeaderFile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <ForcedIncludeFiles>stdafx_server.h</ForcedIncludeFiles>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
@@ -72,8 +72,8 @@
       <PreprocessorDefinitions>NDEBUG;_DEDICATED_SERVER;_WINDOWS64;_CONSOLE;WIN32_LEAN_AND_MEAN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)DedicatedServer;$(ProjectDir)..\Minecraft.World;$(ProjectDir)..\Minecraft.World\x64headers;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>stdafx_server.h</PrecompiledHeaderFile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <ForcedIncludeFiles>stdafx_server.h</ForcedIncludeFiles>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
@@ -109,9 +109,6 @@
     <ClCompile Include="EntityTracker.cpp" />
     <ClCompile Include="Settings.cpp" />
     <ClCompile Include="ServerCommandDispatcher.cpp" />
-    <ClCompile Include="DedicatedServer\stdafx.cpp">
-      <PrecompiledHeader>Create</PrecompiledHeader>
-    </ClCompile>
   </ItemGroup>
 
   <!-- Network files -->
