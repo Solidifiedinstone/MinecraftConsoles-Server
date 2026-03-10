@@ -821,4 +821,17 @@ typedef DWORD eMinecraftColour;
 const eMinecraftColour MC_WHITE = 0xFFFFFFFF;
 const eMinecraftColour MC_BLACK = 0xFF000000;
 
+//=============================================================================
+// Include Minecraft.World headers in correct order
+// These provide game types (Vec3, AABB, Entity, Level, Random, etc.)
+//=============================================================================
+#include "../../Minecraft.World/Definitions.h"
+#include "../../Minecraft.World/class.h"
+#include "../../Minecraft.World/ArrayWithLength.h"
+#include "../../Minecraft.World/SharedConstants.h"
+#include "../../Minecraft.World/Random.h"
+#include "../../Minecraft.World/compression.h"
+#include "../../Minecraft.World/PerformanceTimer.h"
+#include "../../Minecraft.World/C4JThread.h"
+
 // End of stdafx_server.h
