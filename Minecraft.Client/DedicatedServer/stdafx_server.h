@@ -106,6 +106,23 @@ inline void PIXReportCounter(const wchar_t*, float) {}
 #define MINECRAFT_NET_MAX_PLAYERS 8
 
 //=============================================================================
+// Undefine any Windows macros that conflict with game code
+//=============================================================================
+#ifdef BIGENDIAN
+#undef BIGENDIAN
+#endif
+#ifdef LITTLEENDIAN
+#undef LITTLEENDIAN
+#endif
+
+//=============================================================================
+// extraX64.h types (MUST come before Minecraft.World includes)
+//=============================================================================
+typedef unsigned char byte;
+typedef ULONGLONG PlayerUID;
+typedef ULONGLONG GameSessionUID;
+
+//=============================================================================
 // Include core Minecraft.World headers (these are platform-independent)
 //=============================================================================
 #include "../../Minecraft.World/Definitions.h"
@@ -117,11 +134,8 @@ inline void PIXReportCounter(const wchar_t*, float) {}
 #include "../../Minecraft.World/PerformanceTimer.h"
 
 //=============================================================================
-// extraX64.h types (needed for networking)
+// Additional extraX64.h types (networking)
 //=============================================================================
-typedef unsigned char byte;
-typedef ULONGLONG PlayerUID;
-typedef ULONGLONG GameSessionUID;
 
 struct SessionID {
     BYTE data[16];
