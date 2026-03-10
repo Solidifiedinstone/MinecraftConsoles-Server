@@ -237,6 +237,134 @@ const int QNET_USER_MASK_USER2 = 4;
 const int QNET_USER_MASK_USER3 = 8;
 const int INVALID_XUID = 0;
 
+// Xbox-like types needed by network code
+typedef struct _XOVERLAPPED {} XOVERLAPPED, *PXOVERLAPPED;
+typedef struct _XSESSION_SEARCHRESULT {} XSESSION_SEARCHRESULT, *PXSESSION_SEARCHRESULT;
+typedef struct _XSESSION_SEARCHRESULT_HEADER {
+    DWORD dwSearchResults;
+    XSESSION_SEARCHRESULT *pResults;
+} XSESSION_SEARCHRESULT_HEADER, *PXSESSION_SEARCHRESULT_HEADER;
+
+typedef struct {
+    BYTE bFlags;
+    BYTE bReserved;
+    WORD cProbesXmit;
+    WORD cProbesRecv;
+    WORD cbData;
+    BYTE *pbData;
+    WORD wRttMinInMsecs;
+    WORD wRttMedInMsecs;
+    DWORD dwUpBitsPerSec;
+    DWORD dwDnBitsPerSec;
+} XNQOSINFO;
+
+typedef struct {
+    UINT cxnqos;
+    UINT cxnqosPending;
+    XNQOSINFO axnqosinfo[1];
+} XNQOS;
+
+typedef struct {
+    DWORD dwContextId;
+    DWORD dwValue;
+} XUSER_CONTEXT, *PXUSER_CONTEXT;
+
+typedef struct _XUSER_SIGNIN_INFO {
+    PlayerUID xuid;
+    DWORD dwGuestNumber;
+} XUSER_SIGNIN_INFO, *PXUSER_SIGNIN_INFO;
+
+// User info constants
+const int XUSER_NAME_SIZE = 32;
+#define XUSER_GET_SIGNIN_INFO_ONLINE_XUID_ONLY 0x00000001
+#define XUSER_GET_SIGNIN_INFO_OFFLINE_XUID_ONLY 0x00000002
+
+inline DWORD XUserGetSigninInfo(DWORD, DWORD, PXUSER_SIGNIN_INFO) { return 0; }
+
+// Friend list types
+typedef struct _XONLINE_FRIEND {
+    PlayerUID xuid;
+    CHAR szGamertag[XUSER_NAME_SIZE];
+    DWORD dwFriendState;
+    BYTE sessionID[16]; // Use BYTE array instead of forward ref
+    DWORD dwTitleID;
+    FILETIME ftUserTime;
+    BYTE xnkidInvite[16];
+    FILETIME gameinviteTime;
+    DWORD cchRichPresence;
+} XONLINE_FRIEND, *PXONLINE_FRIEND;
+
+// Content types
+const int XCONTENT_MAX_DISPLAYNAME_LENGTH = 256;
+const int XCONTENT_MAX_FILENAME_LENGTH = 256;
+typedef int XCONTENTDEVICEID;
+
+typedef struct _XCONTENT_DATA {
+    XCONTENTDEVICEID DeviceID;
+    DWORD dwContentType;
+    WCHAR szDisplayName[XCONTENT_MAX_DISPLAYNAME_LENGTH];
+    CHAR szFileName[XCONTENT_MAX_FILENAME_LENGTH];
+} XCONTENT_DATA, *PXCONTENT_DATA;
+
+// Send buffer type
+struct XRNM_SEND_BUFFER {
+    DWORD dwDataSize;
+    byte *pbyData;
+};
+
+// D3D extras
+const int D3DBLEND_CONSTANTALPHA = 0;
+const int D3DBLEND_INVCONSTANTALPHA = 0;
+const int D3DPT_QUADLIST = 0;
+
+// Language and locale constants
+const int XC_LANGUAGE_ENGLISH = 0x01;
+const int XC_LANGUAGE_JAPANESE = 0x02;
+const int XC_LANGUAGE_GERMAN = 0x03;
+const int XC_LANGUAGE_FRENCH = 0x04;
+const int XC_LANGUAGE_SPANISH = 0x05;
+const int XC_LANGUAGE_ITALIAN = 0x06;
+const int XC_LANGUAGE_KOREAN = 0x07;
+const int XC_LANGUAGE_TCHINESE = 0x08;
+const int XC_LANGUAGE_PORTUGUESE = 0x09;
+const int XC_LOCALE_UNITED_STATES = 36;
+
+inline DWORD XGetLanguage() { return XC_LANGUAGE_ENGLISH; }
+inline DWORD XGetLocale() { return XC_LOCALE_UNITED_STATES; }
+inline DWORD XEnableGuestSignin(BOOL) { return 0; }
+
+// PIX functions
+inline void PIXAddNamedCounter(int, char*, ...) {}
+inline void PIXSetMarkerDeprecated(int, char*, ...) {}
+
+// Thread helpers
+inline void XSetThreadProcessor(HANDLE, int) {}
+
+// XUI string table stub
+class CXuiStringTable {
+public:
+    LPCWSTR Lookup(LPCWSTR) { return L""; }
+    LPCWSTR Lookup(UINT) { return L""; }
+    void Clear() {}
+    HRESULT Load(LPCWSTR) { return S_OK; }
+};
+
+// Memory functions
+inline void XMemCpy(void* a, const void* b, size_t s) { memcpy(a, b, s); }
+inline void XMemSet(void* a, int t, size_t s) { memset(a, t, s); }
+inline void XMemSet128(void* a, int t, size_t s) { memset(a, t, s); }
+inline void* XPhysicalAlloc(SIZE_T, ULONG_PTR, ULONG_PTR, DWORD) { return nullptr; }
+inline void XPhysicalFree(void*) {}
+
+// D3D vector stub
+class D3DXVECTOR3 {
+public:
+    D3DXVECTOR3() : x(0), y(0), z(0), pad(0) {}
+    D3DXVECTOR3(float _x, float _y, float _z) : x(_x), y(_y), z(_z), pad(0) {}
+    float x, y, z, pad;
+    D3DXVECTOR3& operator+=(const D3DXVECTOR3& add) { x += add.x; y += add.y; z += add.z; return *this; }
+};
+
 struct SessionID {
     BYTE data[16];
     SessionID() { memset(data, 0, sizeof(data)); }
