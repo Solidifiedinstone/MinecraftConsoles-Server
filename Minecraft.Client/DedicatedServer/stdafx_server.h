@@ -413,134 +413,31 @@ public:
 #define StorageManager CStorageManager::GetInstance()
 
 //=============================================================================
-// GUI/Rendering Stubs
+// Forward declarations for GUI/Rendering types
+// Note: These types are defined in Minecraft.Client headers - do NOT define stubs here
 //=============================================================================
-class Textures {
-public:
-    int loadTexture(const wstring&) { return 0; }
-    void bindTexture(int) {}
-    void tick() {}
-};
-
-class Font {
-public:
-    void draw(const wstring&, int, int, int) {}
-    int width(const wstring&) { return 0; }
-    int width(const char*) { return 0; }
-};
-
-class Gui {
-public:
-    void tick() {}
-    void clearMessages() {}
-};
-
-class Screen {
-public:
-    virtual void render(int, int, float) {}
-    virtual void tick() {}
-    virtual void init() {}
-    virtual void removed() {}
-    virtual ~Screen() {}
-};
-
-class ScreenSizeCalculator {
-public:
-    int getWidth() { return 1920; }
-    int getHeight() { return 1080; }
-    float getScale() { return 1.0f; }
-};
-
-class BufferedImage {
-public:
-    int width, height;
-    BufferedImage() : width(0), height(0) {}
-};
-
-class GameRenderer {};
-
-class User {
-public:
-    wstring name;
-    User() : name(L"Server") {}
-};
-
-class Options {};
-class TexturePackRepository {};
-
-// Forward declare Minecraft client types
+class Textures;
+class Font;
+class Gui;
+class Screen;
+class ScreenSizeCalculator;
+class BufferedImage;
+class GameRenderer;
+class User;
+class Options;
+class TexturePackRepository;
 class MultiPlayerLevel;
 class MultiPlayerGameMode;
 class MultiplayerLocalPlayer;
 class Packet;
 class ProgressRenderer;
+class Minecraft;
 
 //=============================================================================
-// Minecraft class stub
+// Game host options - forward declare, defined in App_enums.h
 //=============================================================================
-class Minecraft {
-public:
-    ProgressRenderer* progressRenderer;
-    GameRenderer* gameRenderer;
-    MultiPlayerLevel* level;
-    User* user;
-    Options* options;
-    Textures* textures;
-    Font* font;
-    Screen* screen;
-    Gui* gui;
-    TexturePackRepository* skins;
-
-    shared_ptr<MultiplayerLocalPlayer> localplayers[XUSER_MAX_COUNT];
-    void* m_pendingLocalConnections[XUSER_MAX_COUNT];
-    bool m_connectionFailed[XUSER_MAX_COUNT];
-    int m_connectionFailedReason[XUSER_MAX_COUNT];
-
-    Minecraft() : progressRenderer(nullptr), gameRenderer(nullptr), level(nullptr),
-                  user(nullptr), options(nullptr), textures(nullptr), font(nullptr),
-                  screen(nullptr), gui(nullptr), skins(nullptr) {
-        memset(m_pendingLocalConnections, 0, sizeof(m_pendingLocalConnections));
-        memset(m_connectionFailed, 0, sizeof(m_connectionFailed));
-        memset(m_connectionFailedReason, 0, sizeof(m_connectionFailedReason));
-    }
-
-    static Minecraft* GetInstance() { static Minecraft inst; return &inst; }
-    bool isTutorial() { return false; }
-    void clearConnectionFailed() {}
-    void connectionDisconnected(int, int) {}
-    void addPendingLocalConnection(int, void*) {}
-    void removeLocalPlayerIdx(int) {}
-    void clearPendingClientTextureRequests() {}
-    void forceStatsSave(int) {}
-};
-
-//=============================================================================
-// Game host options enum
-//=============================================================================
-enum eGameHostOption {
-    eGameHostOption_GameType = 0,
-    eGameHostOption_Difficulty,
-    eGameHostOption_PvP,
-    eGameHostOption_FireSpreads,
-    eGameHostOption_TNT,
-    eGameHostOption_Structures,
-    eGameHostOption_BonusChest,
-    eGameHostOption_LevelType,
-    eGameHostOption_All,
-    eGameHostOption_FriendsOfFriends,
-    eGameHostOption_Gamertags,
-    eGameHostOption_HasBeenInCreative,
-    eGameHostOption_Max
-};
-
-enum eXuiServerAction {
-    eXuiServerAction_None = 0,
-    eXuiServerAction_SaveGame,
-    eXuiServerAction_AutoSaveGame,
-    eXuiServerAction_PauseGame,
-    eXuiServerAction_ResumeGame,
-    eXuiServerAction_DropItem,
-};
+enum eGameHostOption;
+enum eXuiServerAction;
 
 //=============================================================================
 // CMinecraftApp stub
@@ -663,144 +560,17 @@ inline void MemSect(int) {}
 #define IDS_PROGRESS_SAVING_CHUNKS 1004
 
 //=============================================================================
-// INetworkPlayer (forward declaration for network manager)
+// Forward declarations for Network types
+// Note: These are defined in Minecraft.Client headers - do NOT define stubs here
 //=============================================================================
-class INetworkPlayer {
-public:
-    virtual ~INetworkPlayer() {}
-    virtual PlayerUID GetXuid() const { return 0; }
-    virtual const wchar_t* GetGamertag() const { return L"Player"; }
-    virtual bool IsLocal() const { return false; }
-    virtual bool IsHost() const { return false; }
-    virtual int GetUserIndex() const { return 0; }
-    virtual BYTE GetSmallId() const { return 0; }
-    virtual void SendPacket(Packet*) {}
-};
-
-//=============================================================================
-// Platform Network Manager Stub
-//=============================================================================
-class CPlatformNetworkManager {
-public:
-    enum eJoinFailedReason { eJoinFailed_General };
-    static CPlatformNetworkManager* GetInstance() { static CPlatformNetworkManager inst; return &inst; }
-};
-
-class CPlatformNetworkManagerStub : public CPlatformNetworkManager {};
-
-//=============================================================================
-// Session Info
-//=============================================================================
-struct FriendSessionInfo {
-    SessionID sessionId;
-    wstring hostGamertag;
-    PlayerUID hostXuid;
-    int playerCount;
-    int maxPlayers;
-    bool isPrivate;
-    FriendSessionInfo() : hostXuid(0), playerCount(0), maxPlayers(8), isPrivate(false) {}
-};
-
-//=============================================================================
-// CGameNetworkManager stub
-//=============================================================================
+class INetworkPlayer;
+class CPlatformNetworkManager;
+class CPlatformNetworkManagerStub;
+struct FriendSessionInfo;
 class ClientConnection;
+class CGameNetworkManager;
 
-class CGameNetworkManager {
-public:
-    enum eJoinGameResult { JOINGAME_SUCCESS, JOINGAME_FAIL_GENERAL, JOINGAME_FAIL_SERVER_FULL };
-
-    CGameNetworkManager() {}
-    void Initialise() {}
-    void Terminate() {}
-    void DoWork() {}
-    bool _RunNetworkGame(LPVOID) { return false; }
-    bool StartNetworkGame(Minecraft*, LPVOID) { return false; }
-    int CorrectErrorIDS(int IDS) { return IDS; }
-
-    static int GetLocalPlayerMask(int playerIndex) { return 1 << playerIndex; }
-    int GetPlayerCount() { return 0; }
-    int GetOnlinePlayerCount() { return 0; }
-    bool AddLocalPlayerByUserIndex(int) { return false; }
-    bool RemoveLocalPlayerByUserIndex(int) { return false; }
-    INetworkPlayer* GetLocalPlayerByUserIndex(int) { return nullptr; }
-    INetworkPlayer* GetPlayerByIndex(int) { return nullptr; }
-    INetworkPlayer* GetPlayerByXuid(PlayerUID) { return nullptr; }
-    INetworkPlayer* GetPlayerBySmallId(unsigned char) { return nullptr; }
-    wstring GetDisplayNameByGamertag(wstring gt) { return gt; }
-    INetworkPlayer* GetHostPlayer() { return nullptr; }
-    void RegisterPlayerChangedCallback(int, void (*)(void*, INetworkPlayer*, bool), void*) {}
-    void UnRegisterPlayerChangedCallback(int, void (*)(void*, INetworkPlayer*, bool), void*) {}
-    void HandleSignInChange() {}
-    bool ShouldMessageForFullSession() { return false; }
-
-    bool IsInSession() { return false; }
-    bool IsInGameplay() { return false; }
-    bool IsLeavingGame() { return false; }
-    bool IsReadyToPlayOrIdle() { return true; }
-
-    bool SetLocalGame(bool) { return true; }
-    bool IsLocalGame() { return true; }
-    void SetPrivateGame(bool) {}
-    bool IsPrivateGame() { return false; }
-    void HostGame(int, bool, bool, unsigned char = 8, unsigned char = 0) {}
-    bool IsHost() { return true; }
-    bool IsInStatsEnabledSession() { return false; }
-
-    bool SessionHasSpace(unsigned int = 1) { return true; }
-    vector<FriendSessionInfo*>* GetSessionList(int, int, bool) { return nullptr; }
-    bool GetGameSessionInfo(int, SessionID, FriendSessionInfo*) { return false; }
-    void SetSessionsUpdatedCallback(void (*)(LPVOID), LPVOID) {}
-    void GetFullFriendSessionInfo(FriendSessionInfo*, void (*)(bool, void*), void*) {}
-    void ForceFriendsSessionRefresh() {}
-
-    bool JoinGameFromInviteInfo(int, int, const INVITE_INFO*) { return false; }
-    eJoinGameResult JoinGame(FriendSessionInfo*, int) { return JOINGAME_SUCCESS; }
-    static void CancelJoinGame(LPVOID) {}
-    bool LeaveGame(bool) { return true; }
-    static int JoinFromInvite_SignInReturned(void*, bool, int) { return 0; }
-    void UpdateAndSetGameSessionData(INetworkPlayer* = nullptr) {}
-    void SendInviteGUI(int) {}
-    void ResetLeavingGame() {}
-
-    bool IsNetworkThreadRunning() { return false; }
-    static int RunNetworkGameThreadProc(void*) { return 0; }
-    static int ServerThreadProc(void*) { return 0; }
-#ifdef _DEDICATED_SERVER
-    static int DedicatedServerMain(void*) { return 0; }
-#endif
-    static int ExitAndJoinFromInviteThreadProc(void*) { return 0; }
-    static void _LeaveGame() {}
-    static int ChangeSessionTypeThreadProc(void*) { return 0; }
-
-    void SystemFlagSet(INetworkPlayer*, int) {}
-    bool SystemFlagGet(INetworkPlayer*, int) { return false; }
-
-    void ServerReadyCreate(bool) {}
-    void ServerReady() {}
-    void ServerReadyWait() {}
-    void ServerReadyDestroy() {}
-    bool ServerReadyValid() { return false; }
-
-    void ServerStoppedCreate(bool) {}
-    void ServerStopped() {}
-    void ServerStoppedWait() {}
-    void ServerStoppedDestroy() {}
-    bool ServerStoppedValid() { return false; }
-
-    wstring GatherStats() { return L""; }
-    void renderQueueMeter() {}
-    wstring GatherRTTStats() { return L""; }
-
-    static const int messageQueue_length = 512;
-    static __int64 messageQueue[messageQueue_length];
-    static const int byteQueue_length = 512;
-    static __int64 byteQueue[byteQueue_length];
-    static int messageQueuePos;
-
-    void FakeLocalPlayerJoined() {}
-};
-
+// External reference to global network manager (defined in stdafx.cpp)
 extern CGameNetworkManager g_NetworkManager;
 
 //=============================================================================

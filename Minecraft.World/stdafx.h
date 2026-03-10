@@ -199,7 +199,7 @@ void MemSect(int sect);
 #include "..\Minecraft.Client\Common\XUI\XUI_Scene_Base.h"
 #endif
 #include "..\Minecraft.Client\Common\Consoles_App.h"
-#endif // _DEDICATED_SERVER
+
 #include "..\Minecraft.Client\Common\Minecraft_Macros.h"
 #include "..\Minecraft.Client\Common\Colours\ColourTable.h"
 
@@ -242,6 +242,8 @@ void MemSect(int sect);
 #include "..\Minecraft.Client\Orbis\Sentient\SentientTelemetryCommon.h"
 #include "..\Minecraft.Client\Orbis\Sentient\MinecraftTelemetry.h"
 #endif
+
+#endif // _DEDICATED_SERVER
 
 #include "..\Minecraft.Client\Common\DLC\DLCSkinFile.h"
 #include "..\Minecraft.Client\Common\Console_Awards_enum.h"
