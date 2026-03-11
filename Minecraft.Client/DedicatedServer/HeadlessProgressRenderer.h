@@ -4,12 +4,12 @@
 
 #pragma once
 
-#include "../../Minecraft.World/ProgressListener.h"
+#include "../ProgressRenderer.h"
 #include <string>
 
 using namespace std;
 
-class HeadlessProgressRenderer : public ProgressListener
+class HeadlessProgressRenderer : public ProgressRenderer
 {
 public:
 	enum eProgressStringType

@@ -161,6 +161,10 @@ void ServerConnection::handleTextureAndGeometryReceived(const wstring &textureNa
 
 void ServerConnection::handleServerSettingsChanged(shared_ptr<ServerSettingsChangedPacket> packet)
 {
+#ifdef _DEDICATED_SERVER
+	// Dedicated server doesn't handle client-side settings changes
+	(void)packet;
+#else
 	Minecraft *pMinecraft = Minecraft::GetInstance();
 
 	if(packet->action==ServerSettingsChangedPacket::HOST_DIFFICULTY)
@@ -197,6 +201,7 @@ void ServerConnection::handleServerSettingsChanged(shared_ptr<ServerSettingsChan
 // 			playerconnection->setShowOnMaps(pMinecraft->options->GetGamertagSetting());				
 // 		}
 // 	}
+#endif // !_DEDICATED_SERVER
 }
 
 vector< shared_ptr<PlayerConnection> >  * ServerConnection::getPlayers()

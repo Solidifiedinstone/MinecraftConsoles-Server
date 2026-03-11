@@ -9,10 +9,5 @@ CMinecraftApp app;
 // Global network manager instance
 CGameNetworkManager g_NetworkManager;
 
-// Static members for CGameNetworkManager
-__int64 CGameNetworkManager::messageQueue[CGameNetworkManager::messageQueue_length];
-__int64 CGameNetworkManager::byteQueue[CGameNetworkManager::byteQueue_length];
-int CGameNetworkManager::messageQueuePos = 0;
-
 // Static members for IQNet
 IQNetPlayer IQNet::m_player[4];

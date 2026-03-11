@@ -511,8 +511,17 @@ class MultiPlayerLevel;
 class MultiPlayerGameMode;
 class MultiplayerLocalPlayer;
 class Packet;
-class ProgressRenderer;
 class Minecraft;
+
+// ProgressRenderer - include real header (uses Minecraft* as pointer only, OK with forward decl)
+#include "../ProgressRenderer.h"
+
+// DebugSetCameraPosition stub (from Common/UI/UIStructs.h - not included for dedicated server)
+struct DebugSetCameraPosition {
+    int player;
+    float m_camX, m_camY, m_camZ;
+    float m_yRot, m_elev;
+};
 
 //=============================================================================
 // Game host options and other enums - include from real header
@@ -525,11 +534,17 @@ const int eGameHostOption_Max = eGameHostOption_DoDaylightCycle + 1;
 //=============================================================================
 // CMinecraftApp stub
 //=============================================================================
+#define GAME_RULE_SAVENAME L"requiredGameRules.grf"
+
 class GameRuleManager {
 public:
     void loadCurrentGameRules() {}
     void unloadCurrentGameRules() {}
     void saveToFile() {}
+    LevelGenerationOptions* getLevelGenerationOptions() { return NULL; }
+    LevelGenerationOptions* loadGameRules(byte* dIn, UINT dSize) { return NULL; }
+    void loadGameRules(LevelGenerationOptions* lgo, byte* dIn, UINT dSize) {}
+    void saveGameRules(byte** dOut, UINT* dSize) { if(dOut) *dOut = NULL; if(dSize) *dSize = 0; }
 };
 
 class CMinecraftApp {
@@ -585,6 +600,16 @@ public:
     bool IsFileInMemoryTextures(const wstring&) { return false; }
     void AddMemoryTextureFile(const wstring&, void*, int) {}
     void processSchematicsLighting(LevelChunk*) {}
+    LevelGenerationOptions* getLevelGenerationOptions() { return m_gameRules.getLevelGenerationOptions(); }
+    bool DebugSettingsOn() { return false; }
+    int GetGameSettingsDebugMask(int) { return 0; }
+    bool GetTerrainFeaturePosition(_eTerrainFeatureType, int* px, int* pz) { return false; }
+    eXuiServerAction GetXuiServerAction(int) { return eXuiServerAction_Idle; }
+    LPVOID GetXuiServerActionParam(int) { return NULL; }
+    void SetXuiServerAction(int, eXuiServerAction) {}
+    bool isTutorial() { return false; }
+    int GetGameNewWorldSize() { return 0; }
+    bool GetGameNewWorldSizeUseMoat() { return false; }
 };
 
 extern CMinecraftApp app;
@@ -668,9 +693,76 @@ class CPlatformNetworkManager;
 class CPlatformNetworkManagerStub;
 struct FriendSessionInfo;
 class ClientConnection;
-class CGameNetworkManager;
 
-// External reference to global network manager (defined in stdafx.cpp)
+// Full stub for CGameNetworkManager (dedicated server - no real networking needed)
+class CGameNetworkManager {
+public:
+    CGameNetworkManager() : m_bInitialised(false), m_bLastDisconnectWasLostRoomOnly(false), m_bFullSessionMessageOnNextSessionChange(false) {}
+
+    void Initialise() {}
+    void Terminate() {}
+    void DoWork() {}
+    bool IsInSession() { return true; }
+    bool IsLocalGame() { return true; }
+    bool IsHost() { return true; }
+    bool IsInGameplay() { return true; }
+    bool IsLeavingGame() { return false; }
+    bool IsReadyToPlayOrIdle() { return true; }
+    bool IsPrivateGame() { return false; }
+    bool IsInStatsEnabledSession() { return false; }
+    bool IsNetworkThreadRunning() { return false; }
+    bool ShouldMessageForFullSession() { return false; }
+    bool SessionHasSpace(unsigned int spaceRequired = 1) { return true; }
+    int GetPlayerCount() { return 0; }
+    int GetOnlinePlayerCount() { return 0; }
+    static int GetLocalPlayerMask(int) { return 0; }
+    bool AddLocalPlayerByUserIndex(int) { return true; }
+    bool RemoveLocalPlayerByUserIndex(int) { return true; }
+    INetworkPlayer* GetLocalPlayerByUserIndex(int) { return nullptr; }
+    INetworkPlayer* GetPlayerByIndex(int) { return nullptr; }
+    INetworkPlayer* GetPlayerBySmallId(unsigned char) { return nullptr; }
+    INetworkPlayer* GetPlayerByXuid(PlayerUID) { return nullptr; }
+    INetworkPlayer* GetHostPlayer() { return nullptr; }
+    wstring GetDisplayNameByGamertag(wstring g) { return g; }
+    void RegisterPlayerChangedCallback(int, void(*)(void*, INetworkPlayer*, bool), void*) {}
+    void UnRegisterPlayerChangedCallback(int, void(*)(void*, INetworkPlayer*, bool), void*) {}
+    void HandleSignInChange() {}
+    void ServerReady() {}
+    void ServerReadyCreate(bool) {}
+    void ServerReadyWait() {}
+    void ServerReadyDestroy() {}
+    bool ServerReadyValid() { return false; }
+    void ServerStopped() {}
+    void ServerStoppedCreate(bool) {}
+    void ServerStoppedWait() {}
+    void ServerStoppedDestroy() {}
+    bool ServerStoppedValid() { return false; }
+    void SystemFlagSet(INetworkPlayer*, int) {}
+    bool SystemFlagGet(INetworkPlayer*, int) { return false; }
+    void UpdateAndSetGameSessionData(INetworkPlayer* = nullptr) {}
+    void HostGame(int, bool, bool, unsigned char = 8, unsigned char = 0) {}
+    bool LeaveGame(bool) { return true; }
+    bool SetLocalGame(bool) { return true; }
+    void SetPrivateGame(bool) {}
+    void ResetLeavingGame() {}
+    bool JoinGameFromInviteInfo(int, int, const INVITE_INFO*) { return false; }
+    void SendInviteGUI(int) {}
+    void HandleDisconnect(bool) {}
+    int GetJoiningReadyPercentage() { return 100; }
+    int CorrectErrorIDS(int ids) { return ids; }
+    bool _RunNetworkGame(LPVOID) { return true; }
+    bool StartNetworkGame(void*, LPVOID) { return true; }
+    wstring GatherStats() { return L""; }
+    wstring GatherRTTStats() { return L""; }
+    void renderQueueMeter() {}
+
+private:
+    bool m_bInitialised;
+    bool m_bLastDisconnectWasLostRoomOnly;
+    bool m_bFullSessionMessageOnNextSessionChange;
+};
+
+// External reference to global network manager (defined in DedicatedServer/stdafx.cpp)
 extern CGameNetworkManager g_NetworkManager;
 
 //=============================================================================

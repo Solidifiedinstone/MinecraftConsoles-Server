@@ -1,9 +1,6 @@
 #include "stdafx.h"
 
-#ifdef _DEDICATED_SERVER
-#include "..\..\DedicatedServer\DedicatedServerApp.h"
-#include "..\..\DedicatedServer\HeadlessProgressRenderer.h"
-#endif
+#ifndef _DEDICATED_SERVER
 
 #include "..\..\..\Minecraft.World\StringHelpers.h"
 #include "..\..\..\Minecraft.World\AABB.h"
@@ -26,11 +23,12 @@
 #include "..\..\..\Minecraft.World\DisconnectPacket.h"
 #include "..\..\..\Minecraft.World\compression.h"
 #include "..\..\..\Minecraft.World\OldChunkStorage.h"
+#ifndef _DEDICATED_SERVER
 #include "..\..\TexturePackRepository.h"
 #include "..\..\TexturePack.h"
-
 #include "..\..\Gui.h"
 #include "..\..\LevelRenderer.h"
+#endif
 #include "..\..\..\Minecraft.World\IntCache.h"
 #include "..\GameRules\ConsoleGameRules.h"
 #include "GameNetworkManager.h"
@@ -2123,4 +2121,6 @@ void CGameNetworkManager::startAdhocMatching()
 	((CPlatformNetworkManagerSony*)s_pPlatformNetworkManager)->startAdhocMatching();
 }
 
-#endif
+#endif // __PSVITA__
+
+#endif // !_DEDICATED_SERVER

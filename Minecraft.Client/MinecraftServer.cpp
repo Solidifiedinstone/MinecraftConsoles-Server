@@ -507,8 +507,10 @@ bool MinecraftServer::loadLevel(LevelStorageSource *storageSource, const wstring
 
 		// 4J Stu - We set the levels difficulty based on the minecraft options
 		//levels[i]->difficulty = settings->getBoolean(L"spawn-monsters", true) ? Difficulty::EASY : Difficulty::PEACEFUL;
+#ifndef _DEDICATED_SERVER
 		Minecraft *pMinecraft = Minecraft::GetInstance();
 		//		m_lastSentDifficulty = pMinecraft->options->difficulty;
+#endif
 		levels[i]->difficulty = app.GetGameHostOption(eGameHostOption_Difficulty); //pMinecraft->options->difficulty;
 		app.DebugPrintf("MinecraftServer::loadLevel - Difficulty = %d\n",levels[i]->difficulty);
 
@@ -1262,7 +1264,9 @@ void MinecraftServer::run(__int64 seed, void *lpParameter)
 		didInit = true;
 		ServerLevel *levelNormalDimension = levels[0];
 		// 4J-PB - Set the Stronghold position in the leveldata if there isn't one in there
+#ifndef _DEDICATED_SERVER
 		Minecraft *pMinecraft = Minecraft::GetInstance();
+#endif
 		LevelData *pLevelData=levelNormalDimension->getLevelData();
 
 		if(pLevelData && pLevelData->getHasStronghold()==false)
@@ -1517,7 +1521,11 @@ void MinecraftServer::run(__int64 seed, void *lpParameter)
 					break;
 
 				case eXuiServerAction_ServerSettingChanged_Difficulty:
+#ifdef _DEDICATED_SERVER
+					players->broadcastAll( shared_ptr<ServerSettingsChangedPacket>( new ServerSettingsChangedPacket( ServerSettingsChangedPacket::HOST_DIFFICULTY, (int)app.GetGameHostOption(eGameHostOption_Difficulty)) ) );
+#else
 					players->broadcastAll( shared_ptr<ServerSettingsChangedPacket>( new ServerSettingsChangedPacket( ServerSettingsChangedPacket::HOST_DIFFICULTY, Minecraft::GetInstance()->options->difficulty) ) );
+#endif
 					break;
 				case eXuiServerAction_ExportSchematic:
 #ifndef _CONTENT_PACKAGE
@@ -1655,7 +1663,9 @@ void MinecraftServer::tick()
 	tickCount++;
 
 	// 4J We need to update client difficulty levels based on the servers
+#ifndef _DEDICATED_SERVER
 	Minecraft *pMinecraft = Minecraft::GetInstance();
+#endif
 	// 4J-PB - sending this on the host changing the difficulty in the menus
 	/*	if(m_lastSentDifficulty != pMinecraft->options->difficulty)
 	{
@@ -1675,7 +1685,11 @@ void MinecraftServer::tick()
 #if DEBUG_SERVER_DONT_SPAWN_MOBS
 			level->setSpawnSettings(false, false);
 #else
+#ifdef _DEDICATED_SERVER
+			level->setSpawnSettings(level->difficulty > 0, animals);
+#else
 			level->setSpawnSettings(level->difficulty > 0 && !Minecraft::GetInstance()->isTutorial(), animals);
+#endif
 #endif
 
 			if (tickCount % 20 == 0)
