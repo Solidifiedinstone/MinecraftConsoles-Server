@@ -186,6 +186,9 @@ void MemSect(int sect);
 
 #include "..\Minecraft.Client\Common\Network\GameNetworkManager.h"
 
+#endif // _DEDICATED_SERVER (4JLibs + GameNetworkManager)
+
+// Common game type headers - required by Minecraft.World regardless of build type
 // #ifdef _XBOX
 #include "..\Minecraft.Client\Common\App_defines.h"
 #include "..\Minecraft.Client\Common\UI\UIEnums.h"
@@ -194,6 +197,7 @@ void MemSect(int sect);
 #include "..\Minecraft.Client\Common\App_structs.h"
 //#endif
 
+#ifndef _DEDICATED_SERVER
 #ifdef _XBOX
 #include "..\Minecraft.Client\Common\XUI\XUI_Helper.h"
 #include "..\Minecraft.Client\Common\XUI\XUI_Scene_Base.h"
@@ -243,7 +247,7 @@ void MemSect(int sect);
 #include "..\Minecraft.Client\Orbis\Sentient\MinecraftTelemetry.h"
 #endif
 
-#endif // _DEDICATED_SERVER
+#endif // _DEDICATED_SERVER (Consoles_App + platform-specific app files)
 
 #include "..\Minecraft.Client\Common\DLC\DLCSkinFile.h"
 #include "..\Minecraft.Client\Common\Console_Awards_enum.h"
