@@ -123,7 +123,7 @@ class LevelChunk;
 class LevelRuleset;
 class LevelGenerationOptions;
 class ModelPart;
-struct MOJANG_DATA;
+// MOJANG_DATA is already defined as a typedef struct in App_structs.h (included via stdafx.h)
 class DLCSkinFile;
 
 //=============================================================================
