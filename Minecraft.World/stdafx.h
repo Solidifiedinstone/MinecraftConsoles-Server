@@ -249,6 +249,11 @@ void MemSect(int sect);
 
 #endif // _DEDICATED_SERVER (Consoles_App + platform-specific app files)
 
+#ifdef _DEDICATED_SERVER
+// Provide stubs for client-only types used by World .cpp files
+#include "ServerWorldStubs.h"
+#endif
+
 #include "..\Minecraft.Client\Common\DLC\DLCSkinFile.h"
 #include "..\Minecraft.Client\Common\Console_Awards_enum.h"
 #include "..\Minecraft.Client\Common\Potion_Macros.h"
