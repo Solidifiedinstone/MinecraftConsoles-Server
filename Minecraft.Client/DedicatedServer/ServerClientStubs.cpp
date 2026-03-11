@@ -10,6 +10,10 @@
 // ============================================================================
 class DLCPack;
 
+// Dimension.h brings in Vec3.h (needed by GameRenderer.h) and defines Dimension
+// (needed by LevelRenderer::getGlobalIndexForChunk which accesses level->dimension->id)
+#include "../../Minecraft.World/Dimension.h"
+
 // ============================================================================
 // GameRenderer stubs
 // Needed because LevelChunk.cpp (World lib) calls AddForDelete/FinishedReassigning
@@ -98,6 +102,8 @@ int LevelRenderer::getGlobalIndexForChunk(int x, int y, int z, int dimensionId)
 // StatsCounter stubs
 // Needed because StatsCounter.cpp has uncompilable profile system dependencies
 // ============================================================================
+// Console_Awards_enum.h defines eAward, needed by GenericStats.h (via Stat.h)
+#include "../Common/Console_Awards_enum.h"
 #include "../StatsCounter.h"
 #include "../../Minecraft.World/Stat.h"
 #include "../../Minecraft.World/Achievement.h"
@@ -126,7 +132,9 @@ void StatsCounter::save(int, bool) {}
 void StatsCounter::flushLeaderboards() {}
 void StatsCounter::saveLeaderboards() {}
 void StatsCounter::setupStatBoards() {}
+#ifdef _DEBUG
 void StatsCounter::WipeLeaderboards() {}
+#endif
 
 // ============================================================================
 // LevelGenerationOptions stubs
