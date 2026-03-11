@@ -119,10 +119,15 @@ typedef XUID GameSessionUID;
 #endif
 
 #ifndef _XBOX
-// In dedicated server builds, ServerWorldStubs.h (included later) provides all XMem
-// type and function definitions, so suppress extraX64.h's XMem block.
+// In dedicated server builds, provide XMem types here so they are available to
+// compression.h (and others) before extraX64.h; then suppress extraX64.h's XMem
+// block to avoid redefinition. Function implementations are in ServerWorldStubs.h.
 #ifdef _DEDICATED_SERVER
 #define _SERVER_XMEM_DEFINED
+typedef VOID* XMEMDECOMPRESSION_CONTEXT;
+typedef VOID* XMEMCOMPRESSION_CONTEXT;
+typedef enum _XMEMCODEC_TYPE { XMEMCODEC_DEFAULT = 0, XMEMCODEC_LZX = 1 } XMEMCODEC_TYPE;
+typedef struct _XMEMCODEC_PARAMETERS_LZX { DWORD Flags; DWORD WindowSize; DWORD CompressionPartitionSize; } XMEMCODEC_PARAMETERS_LZX;
 #endif
 #include "extraX64.h"
 #else

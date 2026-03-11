@@ -96,28 +96,15 @@ inline void* XPhysicalAlloc(SIZE_T sz, ULONG_PTR, ULONG_PTR, DWORD) { return mal
 inline void XPhysicalFree(void* p) { free(p); }
 #endif
 
-// XMem compression types and function stubs (needed by compression.cpp)
-// XMemCpy/XMemSet already above; these are the compression-specific XMem functions
-#ifndef _SERVER_XMEM_COMPRESSION_DEFINED
-#define _SERVER_XMEM_COMPRESSION_DEFINED
-typedef VOID* XMEMCOMPRESSION_CONTEXT;
-typedef VOID* XMEMDECOMPRESSION_CONTEXT;
-typedef enum _XMEMCODEC_TYPE {
-    XMEMCODEC_DEFAULT = 0,
-    XMEMCODEC_LZX = 1
-} XMEMCODEC_TYPE;
-typedef struct _XMEMCODEC_PARAMETERS_LZX {
-    DWORD Flags;
-    DWORD WindowSize;
-    DWORD CompressionPartitionSize;
-} XMEMCODEC_PARAMETERS_LZX;
+// XMem compression function stubs (needed by compression.cpp)
+// Types (XMEMCODEC_TYPE, XMEMCOMPRESSION_CONTEXT, etc.) are defined in stdafx.h
+// before extraX64.h is included, so only function implementations are needed here.
 inline HRESULT XMemCreateCompressionContext(XMEMCODEC_TYPE, const VOID*, DWORD, XMEMCOMPRESSION_CONTEXT* pp) { if(pp) *pp = nullptr; return S_OK; }
 inline HRESULT XMemCreateDecompressionContext(XMEMCODEC_TYPE, const VOID*, DWORD, XMEMDECOMPRESSION_CONTEXT* pp) { if(pp) *pp = nullptr; return S_OK; }
 inline HRESULT XMemCompress(XMEMCOMPRESSION_CONTEXT, VOID*, SIZE_T*, const VOID*, SIZE_T) { return E_FAIL; }
 inline HRESULT XMemDecompress(XMEMDECOMPRESSION_CONTEXT, VOID*, SIZE_T*, const VOID*, SIZE_T) { return E_FAIL; }
 inline void XMemDestroyCompressionContext(XMEMCOMPRESSION_CONTEXT) {}
 inline void XMemDestroyDecompressionContext(XMEMDECOMPRESSION_CONTEXT) {}
-#endif // _SERVER_XMEM_COMPRESSION_DEFINED
 
 // XSetThreadProcessor stub (needed by C4JThread.cpp)
 #ifndef XSetThreadProcessor
