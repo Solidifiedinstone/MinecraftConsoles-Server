@@ -12,15 +12,15 @@
 #include <iostream>
 #include <ctime>
 
-// Common progress string IDs (from the game's string table)
-// These are approximate - actual values from resource file
+// Progress string IDs - must match stdafx_server.h definitions
 #define IDS_PROGRESS_INITIALISING_SERVER    1001
 #define IDS_PROGRESS_GENERATING_SPAWN_AREA  1002
 #define IDS_PROGRESS_LOADING_SPAWN_AREA     1003
 #define IDS_PROGRESS_SAVING_CHUNKS          1004
-#define IDS_PROGRESS_SAVING_TO_DISC         1005
-#define IDS_PROGRESS_CONNECTING             1006
-#define IDS_PROGRESS_CONVERTING_TO_OFFLINE  1007
+#define IDS_PROGRESS_AUTOSAVING_LEVEL       1005
+#define IDS_PROGRESS_SAVING_LEVEL           1006
+#define IDS_PROGRESS_SAVING_TO_DISC         1007
+#define IDS_PROGRESS_SAVING_PLAYERS         1008
 
 // Log helper
 static void ProgressLog(const wchar_t* message)
@@ -60,12 +60,14 @@ wstring HeadlessProgressRenderer::getStringById(int stringId)
 		return L"Loading spawn area...";
 	case IDS_PROGRESS_SAVING_CHUNKS:
 		return L"Saving chunks...";
+	case IDS_PROGRESS_AUTOSAVING_LEVEL:
+		return L"Autosaving level...";
+	case IDS_PROGRESS_SAVING_LEVEL:
+		return L"Saving level...";
 	case IDS_PROGRESS_SAVING_TO_DISC:
 		return L"Saving to disc...";
-	case IDS_PROGRESS_CONNECTING:
-		return L"Connecting...";
-	case IDS_PROGRESS_CONVERTING_TO_OFFLINE:
-		return L"Converting to offline mode...";
+	case IDS_PROGRESS_SAVING_PLAYERS:
+		return L"Saving players...";
 	case -1:
 		return L"";
 	default:

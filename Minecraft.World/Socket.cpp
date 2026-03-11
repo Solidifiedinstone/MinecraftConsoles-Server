@@ -27,7 +27,7 @@ void Socket::Initialise(ServerConnection *serverConnection)
 		for( int i = 0; i < 2; i++ )
 		{
 			if(TryEnterCriticalSection(&s_hostQueueLock[i]))
-			{			
+			{
 				// Clear the queue
 				std::queue<byte> empty;
 				std::swap( s_hostQueue[i], empty );
@@ -36,6 +36,13 @@ void Socket::Initialise(ServerConnection *serverConnection)
 			s_hostOutStream[i]->m_streamOpen = true;
 			s_hostInStream[i]->m_streamOpen = true;
 		}
+#ifdef _DEDICATED_SERVER
+		// Second call: server connection is now set, start TCP listener
+		if (serverConnection != nullptr)
+		{
+			StartTCPListener();
+		}
+#endif
 		return;
 	}
 	init = true;
@@ -52,6 +59,10 @@ Socket::Socket(bool response)
 {
 	m_hostServerConnection = true;
 	m_hostLocal = true;
+#ifdef _DEDICATED_SERVER
+	m_isTCP = false;
+	m_tcpSocket = (ULONG_PTR)INVALID_SOCKET;
+#endif
 	if( response )
 	{
 		m_end = SOCKET_SERVER_END;
@@ -64,7 +75,7 @@ Socket::Socket(bool response)
 	}
 
 	for( int i = 0; i < 2; i++ )
-	{		
+	{
 		m_endClosed[i] = false;
 	}
 	m_socketClosedEvent = NULL;
@@ -76,6 +87,10 @@ Socket::Socket(INetworkPlayer *player, bool response /* = false*/, bool hostLoca
 {
 	m_hostServerConnection = false;
 	m_hostLocal = hostLocal;
+#ifdef _DEDICATED_SERVER
+	m_isTCP = false;
+	m_tcpSocket = (ULONG_PTR)INVALID_SOCKET;
+#endif
 
 	for( int i = 0; i < 2; i++ )
 	{
@@ -540,3 +555,196 @@ void Socket::SocketOutputStreamNetwork::close()
 {
 	m_streamOpen = false;
 }
+
+#ifdef _DEDICATED_SERVER
+/////////////////////////////////// TCP socket support for dedicated server ////////////////////
+
+// Static member definitions
+C4JThread* Socket::s_tcpListenerThread = nullptr;
+int Socket::s_tcpPort = 25565;
+ULONG_PTR Socket::s_tcpListenSocket = (ULONG_PTR)INVALID_SOCKET;
+
+// TCP Socket constructor
+Socket::Socket(ULONG_PTR tcpSocket)
+{
+	m_hostServerConnection = false;
+	m_hostLocal = false;
+	m_end = SOCKET_SERVER_END;
+	m_tcpSocket = tcpSocket;
+	m_isTCP = true;
+
+	for (int i = 0; i < 2; i++)
+	{
+		InitializeCriticalSection(&m_queueLockNetwork[i]);
+		m_inputStream[i] = nullptr;
+		m_outputStream[i] = nullptr;
+		m_endClosed[i] = false;
+	}
+
+	m_inputStream[SOCKET_SERVER_END] = new SocketInputStreamTCP(tcpSocket);
+	m_outputStream[SOCKET_SERVER_END] = new SocketOutputStreamTCP(tcpSocket);
+	m_socketClosedEvent = new C4JThread::Event;
+	networkPlayerSmallId = 0;
+	createdOk = true;
+}
+
+void Socket::SetTCPPort(int port)
+{
+	s_tcpPort = port;
+}
+
+void Socket::StartTCPListener()
+{
+	if (s_tcpListenerThread != nullptr) return;
+
+	WSADATA wsaData;
+	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
+	{
+		printf("[TCP] WSAStartup failed\n");
+		return;
+	}
+
+	SOCKET listenSock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if (listenSock == INVALID_SOCKET)
+	{
+		printf("[TCP] Failed to create listen socket: %d\n", WSAGetLastError());
+		return;
+	}
+
+	int optval = 1;
+	setsockopt(listenSock, SOL_SOCKET, SO_REUSEADDR, (char*)&optval, sizeof(optval));
+
+	sockaddr_in addr;
+	memset(&addr, 0, sizeof(addr));
+	addr.sin_family = AF_INET;
+	addr.sin_addr.s_addr = INADDR_ANY;
+	addr.sin_port = htons((u_short)s_tcpPort);
+
+	if (bind(listenSock, (sockaddr*)&addr, sizeof(addr)) == SOCKET_ERROR)
+	{
+		printf("[TCP] Bind to port %d failed: %d\n", s_tcpPort, WSAGetLastError());
+		closesocket(listenSock);
+		return;
+	}
+
+	if (listen(listenSock, SOMAXCONN) == SOCKET_ERROR)
+	{
+		printf("[TCP] Listen failed: %d\n", WSAGetLastError());
+		closesocket(listenSock);
+		return;
+	}
+
+	s_tcpListenSocket = (ULONG_PTR)listenSock;
+	printf("[TCP] Server listening on port %d\n", s_tcpPort);
+
+	s_tcpListenerThread = new C4JThread(TCPListenerThread, nullptr, "TCP Listener", 64*1024);
+	s_tcpListenerThread->Run();
+}
+
+int Socket::TCPListenerThread(void* param)
+{
+	SOCKET listenSock = (SOCKET)s_tcpListenSocket;
+
+	while (s_serverConnection != nullptr && listenSock != INVALID_SOCKET)
+	{
+		fd_set readfds;
+		FD_ZERO(&readfds);
+		FD_SET(listenSock, &readfds);
+
+		struct timeval timeout;
+		timeout.tv_sec = 1;
+		timeout.tv_usec = 0;
+
+		int result = select(0, &readfds, nullptr, nullptr, &timeout);
+		if (result <= 0) continue;
+
+		SOCKET clientSock = accept(listenSock, nullptr, nullptr);
+		if (clientSock == INVALID_SOCKET) continue;
+
+		printf("[TCP] New client connection accepted\n");
+
+		Socket* tcpSocket = new Socket((ULONG_PTR)clientSock);
+		if (s_serverConnection != nullptr)
+		{
+			s_serverConnection->NewIncomingSocket(tcpSocket);
+		}
+		else
+		{
+			delete tcpSocket;
+			closesocket(clientSock);
+		}
+	}
+	return 0;
+}
+
+/////////////////////////////////// TCP InputStream ////////////////////
+
+int Socket::SocketInputStreamTCP::read()
+{
+	if (!m_streamOpen) return -1;
+	byte b;
+	int received = recv((SOCKET)m_tcpSock, (char*)&b, 1, 0);
+	if (received <= 0)
+	{
+		m_streamOpen = false;
+		return -1;
+	}
+	return (int)(unsigned char)b;
+}
+
+int Socket::SocketInputStreamTCP::read(byteArray b, unsigned int offset, unsigned int length)
+{
+	if (!m_streamOpen || length == 0) return -1;
+	unsigned int total = 0;
+	while (total < length && m_streamOpen)
+	{
+		int received = recv((SOCKET)m_tcpSock, (char*)(b.data + offset + total), (int)(length - total), 0);
+		if (received <= 0)
+		{
+			m_streamOpen = false;
+			return total > 0 ? (int)total : -1;
+		}
+		total += (unsigned int)received;
+	}
+	return (int)total;
+}
+
+void Socket::SocketInputStreamTCP::close()
+{
+	m_streamOpen = false;
+	// Signal recv() to unblock (shutdown RD=0)
+	shutdown((SOCKET)m_tcpSock, 0);
+}
+
+/////////////////////////////////// TCP OutputStream ////////////////////
+
+void Socket::SocketOutputStreamTCP::write(unsigned int b)
+{
+	if (!m_streamOpen) return;
+	byte bb = (byte)b;
+	send((SOCKET)m_tcpSock, (char*)&bb, 1, 0);
+}
+
+void Socket::SocketOutputStreamTCP::write(byteArray b, unsigned int offset, unsigned int length)
+{
+	if (!m_streamOpen || length == 0) return;
+	unsigned int sent = 0;
+	while (sent < length)
+	{
+		int result = send((SOCKET)m_tcpSock, (char*)(b.data + offset + sent), (int)(length - sent), 0);
+		if (result <= 0)
+		{
+			m_streamOpen = false;
+			return;
+		}
+		sent += (unsigned int)result;
+	}
+}
+
+void Socket::SocketOutputStreamTCP::close()
+{
+	m_streamOpen = false;
+	shutdown((SOCKET)m_tcpSock, 1);
+}
+
+#endif // _DEDICATED_SERVER

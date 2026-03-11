@@ -109,7 +109,44 @@ private:
 	static ServerConnection *s_serverConnection;
 
 	BYTE networkPlayerSmallId;
-public:	
+
+#ifdef _DEDICATED_SERVER
+	// TCP socket streams for dedicated server
+	class SocketInputStreamTCP : public InputStream
+	{
+		ULONG_PTR m_tcpSock; // WinSock SOCKET stored as ULONG_PTR to avoid header deps
+		bool m_streamOpen;
+	public:
+		SocketInputStreamTCP(ULONG_PTR sock) : m_tcpSock(sock), m_streamOpen(true) {}
+		virtual int read();
+		virtual int read(byteArray b) { return read(b, 0, b.length); }
+		virtual int read(byteArray b, unsigned int offset, unsigned int length);
+		virtual void close();
+		virtual __int64 skip(__int64 n) { return n; }
+		virtual void flush() {}
+	};
+	class SocketOutputStreamTCP : public SocketOutputStream
+	{
+		ULONG_PTR m_tcpSock;
+		bool m_streamOpen;
+	public:
+		SocketOutputStreamTCP(ULONG_PTR sock) : m_tcpSock(sock), m_streamOpen(true) {}
+		virtual void write(unsigned int b);
+		virtual void write(byteArray b) { write(b, 0, b.length); }
+		virtual void write(byteArray b, unsigned int offset, unsigned int length);
+		virtual void close();
+		virtual void flush() {}
+	};
+	ULONG_PTR m_tcpSocket; // INVALID_SOCKET when not TCP
+	bool m_isTCP;
+
+	static C4JThread* s_tcpListenerThread;
+	static int s_tcpPort;
+	static ULONG_PTR s_tcpListenSocket;
+	static int TCPListenerThread(void* param);
+#endif
+
+public:
 	C4JThread::Event* m_socketClosedEvent;
 
 	INetworkPlayer *getPlayer();
@@ -117,6 +154,11 @@ public:
 
 public:
 	static void Initialise(ServerConnection *serverConnection);
+#ifdef _DEDICATED_SERVER
+	static void SetTCPPort(int port);
+	static void StartTCPListener();
+	Socket(ULONG_PTR tcpSocket); // TCP socket constructor for dedicated server
+#endif
 	Socket(bool response = false);								// 4J - Create a local socket, for end 0 or 1 of a connection
 	Socket(INetworkPlayer *player, bool response  = false, bool hostLocal = false);		// 4J - Create a socket for an INetworkPlayer
 	SocketAddress *getRemoteSocketAddress();

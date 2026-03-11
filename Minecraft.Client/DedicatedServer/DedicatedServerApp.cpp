@@ -119,6 +119,7 @@ bool DedicatedServerApp::Initialize(const DedicatedServerConfig& config)
 	app.SetGameHostOption(eGameHostOption_LevelType, m_hostOptions[eGameHostOption_LevelType]);
 
 	// Initialize socket system
+	Socket::SetTCPPort(config.port);
 	Socket::Initialise(nullptr);
 
 	m_bRunning = true;
