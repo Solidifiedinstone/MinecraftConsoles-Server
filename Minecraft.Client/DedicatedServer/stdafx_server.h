@@ -655,6 +655,7 @@ public:
     int GetGameSettingsDebugMask() { return 0; }
     int GetGameSettingsDebugMask(int) { return 0; }
     void SetGameSettingsDebugMask(int, unsigned int) {}
+    wstring GetString(int) { return L""; }
     bool GetTerrainFeaturePosition(_eTerrainFeatureType, int* px, int* pz) { return false; }
     eXuiServerAction GetXuiServerAction(int) { return eXuiServerAction_Idle; }
     LPVOID GetXuiServerActionParam(int) { return NULL; }
@@ -768,6 +769,8 @@ inline void MemSect(int) {}
 #define IDS_MAX_HANGINGENTITIES 2020
 #define IDS_CANT_SPAWN_IN_PEACEFUL 2021
 #define IDS_MAX_BOATS 2022
+// Entity name IDs
+#define IDS_ENDERDRAGON 3001
 
 //=============================================================================
 // INetworkPlayer - full definition needed since server code calls methods through this pointer
@@ -886,6 +889,7 @@ enum ESavePlatform;
 // Include Minecraft.World headers in correct order
 // These provide game types (Vec3, AABB, Entity, Level, Random, etc.)
 //=============================================================================
+#include "../../Minecraft.World/File.h"
 #include "../../Minecraft.World/Definitions.h"
 #include "../../Minecraft.World/ArrayWithLength.h"
 #include "../../Minecraft.World/SharedConstants.h"
