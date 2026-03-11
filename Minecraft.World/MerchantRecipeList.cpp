@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "net.minecraft.world.item.trading.h"
 #include "MerchantRecipeList.h"
+#include "Packet.h"
 
 MerchantRecipeList::MerchantRecipeList()
 {

@@ -2,6 +2,7 @@
 #include <xrnm.h>
 #include <queue>
 #include <qnet.h>
+#include "C4JThread.h"
 #include "InputStream.h"
 #include "OutputStream.h"
 

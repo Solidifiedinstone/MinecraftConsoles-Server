@@ -242,12 +242,7 @@ const int eGameHostOption_Max = eGameHostOption_DoDaylightCycle + 1;
 class CMinecraftApp {
 public:
 	// Debug output
-	void DebugPrintf(const char* fmt, ...) {
-		va_list args;
-		va_start(args, fmt);
-		vprintf(fmt, args);
-		va_end(args);
-	}
+	void DebugPrintf(const char*, ...) {}
 	bool DebugSettingsOn() { return false; }
 	bool DebugArtToolsOn() { return false; }
 	int GetGameSettingsDebugMask() { return 0; }
@@ -345,9 +340,27 @@ public:
 	bool IsSaving() { return false; }
 	bool IsLoading() { return false; }
 	C4JStorage::ESaveGame GetSaveGameState() { return C4JStorage::ESaveGame_Idle; }
-	wstring GetMountedPath() { return L""; }
-	wstring GetMountedPath(int) { return L""; }
+	std::string GetMountedPath(const char*) { return ""; }
+	std::wstring GetMountedPath(const wchar_t*) { return L""; }
 	void Tick() {}
+	// Save data methods
+	DWORD GetSaveSize() { return 0; }
+	void GetSaveData(void*, unsigned int* size) { if (size) *size = 0; }
+	void* AllocateSaveData(unsigned int size) { return malloc(size); }
+	bool GetSaveUniqueNumber(INT* p) { if (p) *p = 0; return false; }
+	void SetSaveImages(PBYTE, DWORD, PBYTE, DWORD, BYTE*, int) {}
+	template<typename TCallback, typename TParam>
+	void SaveSaveData(TCallback, TParam) {}
+	// Subfile methods
+	int AddSubfile(unsigned int) { return 0; }
+	unsigned int GetSubfileCount() { return 0; }
+	void GetSubfileDetails(unsigned int, unsigned int* pi, unsigned char** pp, unsigned int* ps) {
+		if (pi) *pi = 0; if (pp) *pp = NULL; if (ps) *ps = 0;
+	}
+	void ResetSubfiles() {}
+	void UpdateSubfile(unsigned int, unsigned char*, unsigned int) {}
+	template<typename TCallback, typename TParam>
+	void SaveSubfiles(TCallback, TParam) {}
 	static CStorageManager& GetInstance() { static CStorageManager inst; return inst; }
 };
 #define StorageManager CStorageManager::GetInstance()
@@ -366,6 +379,7 @@ public:
 	void RecordPlayerSessionStart(int) {}
 	void RecordPlayerSessionExit(int, int) {}
 	void RecordLevelStart(int, int, int, int, int, int) {}
+	void RecordLevelSaveOrCheckpoint(int, int, int) {}
 	int GenerateMultiplayerInstanceId() { return 0; }
 	int GetMultiplayerInstanceID() { return 0; }
 	void SetMultiplayerInstanceId(int) {}
@@ -375,14 +389,43 @@ public:
 #endif
 
 //=============================================================================
-// CGameNetworkManager forward declaration + g_NetworkManager extern
-// Needed by Connection.cpp, Level.cpp, LevelChunk.cpp
-// The full CGameNetworkManager class is defined in stdafx_server.h
+// CGameNetworkManager stub class
+// Needed by Connection.cpp, Level.cpp, LevelChunk.cpp, SignTileEntity.cpp, Socket.cpp
+// Provides the methods called on g_NetworkManager (aliased as 'n') in World .cpp files.
 //=============================================================================
 #ifndef _CNETWORKMANAGER_FORWARD_DEFINED
 #define _CNETWORKMANAGER_FORWARD_DEFINED
-class CGameNetworkManager;
+class CGameNetworkManager {
+public:
+	bool IsInSession() { return false; }
+	bool IsLeavingGame() { return false; }
+	bool IsHost() { return true; }
+	bool IsLocalGame() { return true; }
+	bool IsInGameplay() { return false; }
+	bool IsReadyToPlayOrIdle() { return true; }
+	INetworkPlayer* GetHostPlayer() { return NULL; }
+	INetworkPlayer* GetPlayerBySmallId(unsigned char) { return NULL; }
+	INetworkPlayer* GetPlayerByIndex(int) { return NULL; }
+	int GetPlayerCount() { return 0; }
+};
+// World code may use either name; declare both to handle obfuscated and non-obfuscated versions
 extern CGameNetworkManager g_NetworkManager;
+extern CGameNetworkManager n;
+#endif
+
+//=============================================================================
+// DispenserTileEntity forward declaration
+// Needed by WeighedTreasure.h which uses shared_ptr<DispenserTileEntity>
+//=============================================================================
+class DispenserTileEntity;
+
+//=============================================================================
+// MAKE_SKIN_BITMASK macro
+// Normally defined in Minecraft_Macros.h (not included for dedicated server builds)
+// Needed by TextureAndGeometryChangePacket.cpp, TextureAndGeometryPacket.cpp
+//=============================================================================
+#ifndef MAKE_SKIN_BITMASK
+#define MAKE_SKIN_BITMASK(bDlcSkin, dwSkinId) (((bDlcSkin) ? 0x80000000 : 0) | ((dwSkinId) & 0x7FFFFFFF))
 #endif
 
 //=============================================================================
