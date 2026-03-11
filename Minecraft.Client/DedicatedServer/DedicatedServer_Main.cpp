@@ -19,6 +19,8 @@
 #include "../../Minecraft.World/Vec3.h"
 #include "../../Minecraft.World/IntCache.h"
 #include "../../Minecraft.World/compression.h"
+#include "../../Minecraft.World/FireworksRecipe.h"
+#include "../../Minecraft.World/OldChunkStorage.h"
 #include "../../Minecraft.World/net.minecraft.world.level.tile.h"
 #include "../../Minecraft.World/Entity.h"
 #include "../../Minecraft.World/Minecraft.World.h"
@@ -194,6 +196,8 @@ int wmain(int argc, wchar_t* argv[])
 	Entity::useSmallIds();
 	// Note: Level::enableLightingCache() not needed for headless server
 	Tile::CreateNewThreadStorage();
+	FireworksRecipe::CreateNewThreadStorage();
+	OldChunkStorage::CreateNewThreadStorage();
 
 	// Initialize all World lib static singletons (LevelType, Tile, Item, Biome, etc.)
 	MinecraftWorld_RunStaticCtors();
