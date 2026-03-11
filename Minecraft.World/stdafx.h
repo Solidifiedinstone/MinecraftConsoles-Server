@@ -119,6 +119,11 @@ typedef XUID GameSessionUID;
 #endif
 
 #ifndef _XBOX
+// In dedicated server builds, ServerWorldStubs.h (included later) provides all XMem
+// type and function definitions, so suppress extraX64.h's XMem block.
+#ifdef _DEDICATED_SERVER
+#define _SERVER_XMEM_DEFINED
+#endif
 #include "extraX64.h"
 #else
 #include "..\Minecraft.Client\xbox\network\extra.h"
