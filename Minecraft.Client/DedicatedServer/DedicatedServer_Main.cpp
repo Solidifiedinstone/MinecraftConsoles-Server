@@ -225,7 +225,6 @@ int wmain(int argc, wchar_t* argv[])
 	AABB::ReleaseThreadStorage();
 	Vec3::ReleaseThreadStorage();
 	IntCache::ReleaseThreadStorage();
-	Level::destroyLightingCache();
 
 	LogWithTimestamp(L"INFO", L"Server stopped.");
 	return result;

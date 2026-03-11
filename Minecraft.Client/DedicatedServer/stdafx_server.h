@@ -467,9 +467,32 @@ namespace C4JStorage {
 const int MAX_SAVEFILENAME_LENGTH = 256;
 
 //=============================================================================
+// Telemetry enum - no platform dependencies, safe to include directly
+//=============================================================================
+#include "../PSVita/Sentient/TelemetryEnum.h"
+
+//=============================================================================
+// Iggy SDK stubs (font/UI rendering library - not needed for dedicated server)
+//=============================================================================
+#ifndef RADLINK
+#define RADLINK __cdecl
+#endif
+
+typedef unsigned int U32;
+typedef int S32;
+typedef float F32;
+typedef int rrbool;
+
+struct IggyFontMetrics { float ascent; float descent; float advance; float leading; };
+struct IggyGlyphMetrics { float advance; float x; float y; float width; float height; };
+struct IggyBitmapCharacter { int width; int height; int x; int y; void *data; };
+class IggyBitmapFontProvider {};
+
+//=============================================================================
 // Forward declarations for GUI/Rendering types
 // Note: These types are defined in Minecraft.Client headers - do NOT define stubs here
 //=============================================================================
+class StringTable;
 class Textures;
 class Font;
 class Gui;
