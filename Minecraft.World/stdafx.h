@@ -119,10 +119,14 @@ typedef XUID GameSessionUID;
 #endif
 
 #ifndef _XBOX
-// In dedicated server builds, provide XMem types here so they are available to
-// compression.h (and others) before extraX64.h; then suppress extraX64.h's XMem
-// block to avoid redefinition. Function implementations are in ServerWorldStubs.h.
-#ifdef _DEDICATED_SERVER
+// In dedicated server builds, ensure XMem types are defined before extraX64.h
+// so that compression.h (included transitively) can use them. Then suppress
+// extraX64.h's own XMem block via _SERVER_XMEM_DEFINED. Function implementations
+// are in ServerWorldStubs.h.
+// Guard with #ifndef _SERVER_XMEM_DEFINED so stdafx_server.h (which sets this
+// and defines the same types) doesn't cause redefinition when World headers are
+// pulled in from Server project .cpp files.
+#if defined(_DEDICATED_SERVER) && !defined(_SERVER_XMEM_DEFINED)
 #define _SERVER_XMEM_DEFINED
 typedef VOID* XMEMDECOMPRESSION_CONTEXT;
 typedef VOID* XMEMCOMPRESSION_CONTEXT;
