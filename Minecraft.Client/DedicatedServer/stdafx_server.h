@@ -555,6 +555,11 @@ struct DebugSetCameraPosition {
 };
 
 //=============================================================================
+// App defines - constants needed by App_structs.h (MAX_CAPENAME_SIZE etc.)
+//=============================================================================
+#include "../Common/App_Defines.h"
+
+//=============================================================================
 // Game host options and other enums - include from real header
 //=============================================================================
 #include "../Common/App_enums.h"
