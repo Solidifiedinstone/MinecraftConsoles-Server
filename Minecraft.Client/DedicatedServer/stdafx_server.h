@@ -513,8 +513,20 @@ class MultiplayerLocalPlayer;
 class Packet;
 class Minecraft;
 
-// ProgressRenderer - include real header (uses Minecraft* as pointer only, OK with forward decl)
-#include "../ProgressRenderer.h"
+// ProgressRenderer - server-safe stub (replaces client ProgressRenderer.h)
+// Must have a default constructor since HeadlessProgressRenderer inherits from it
+// and doesn't pass a Minecraft* to the parent ctor
+#include "../../Minecraft.World/ProgressListener.h"
+class ProgressRenderer : public ProgressListener {
+public:
+    ProgressRenderer() {}
+    virtual ~ProgressRenderer() {}
+    virtual void progressStart(int title) {}
+    virtual void progressStartNoAbort(int str) {}
+    virtual void progressStage(int status) {}
+    virtual void progressStage(wstring &wstrText) {}
+    virtual void progressStagePercentage(int i) {}
+};
 
 // DebugSetCameraPosition stub (from Common/UI/UIStructs.h - not included for dedicated server)
 struct DebugSetCameraPosition {
@@ -535,6 +547,9 @@ const int eGameHostOption_Max = eGameHostOption_DoDaylightCycle + 1;
 // CMinecraftApp stub
 //=============================================================================
 #define GAME_RULE_SAVENAME L"requiredGameRules.grf"
+
+// Forward declaration needed by GameRuleManager methods
+class LevelGenerationOptions;
 
 class GameRuleManager {
 public:

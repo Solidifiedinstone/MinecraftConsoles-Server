@@ -4,7 +4,8 @@
 
 #pragma once
 
-#include "../ProgressRenderer.h"
+// ProgressRenderer is defined in stdafx_server.h (force-included) for dedicated server
+// and in ProgressRenderer.h for the client build
 #include <string>
 
 using namespace std;
