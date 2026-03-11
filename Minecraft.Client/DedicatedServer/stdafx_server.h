@@ -489,10 +489,14 @@ struct IggyBitmapCharacter { int width; int height; int x; int y; void *data; };
 class IggyBitmapFontProvider {};
 
 //=============================================================================
-// Forward declarations for GUI/Rendering types
+// Forward declarations for GUI/Rendering and other client types
 // Note: These types are defined in Minecraft.Client headers - do NOT define stubs here
 //=============================================================================
 class StringTable;
+class ColourTable;
+struct STRING_VERIFY_RESPONSE;
+class LevelChunk;
+class LevelRuleset;
 class Textures;
 class Font;
 class Gui;
@@ -575,6 +579,12 @@ public:
 
     void EnterSaveNotificationSection() {}
     void LeaveSaveNotificationSection() {}
+
+    // Methods called by server-side .cpp files
+    LevelRuleset* getGameRuleDefinitions() { return NULL; }
+    bool IsFileInMemoryTextures(const wstring&) { return false; }
+    void AddMemoryTextureFile(const wstring&, void*, int) {}
+    void processSchematicsLighting(LevelChunk*) {}
 };
 
 extern CMinecraftApp app;
@@ -613,6 +623,7 @@ public:
     void RecordPlayerSessionExit(int, int) {}
     void RecordLevelStart(int, int, int, int, int, int) {}
     int GenerateMultiplayerInstanceId() { return 0; }
+    int GetMultiplayerInstanceID() { return 0; }
     void SetMultiplayerInstanceId(int) {}
     static CTelemetryManager* GetInstance() { static CTelemetryManager inst; return &inst; }
 };
@@ -622,10 +633,13 @@ public:
 // Shutdown Manager
 //=============================================================================
 namespace ShutdownManager {
-    enum Thread { eServerThread, ePostProcessThread };
+    enum Thread { eServerThread, ePostProcessThread, eRunUpdateThread };
     inline void HasStarted(Thread) {}
+    inline void HasStarted(Thread, void*) {}
     inline void HasFinished(Thread) {}
+    inline void HasFinished(Thread, void*) {}
     inline bool ShouldRun(Thread) { return true; }
+    inline bool ShouldRun(Thread, void*) { return true; }
 }
 
 //=============================================================================
@@ -642,10 +656,14 @@ inline void MemSect(int) {}
 #define IDS_PROGRESS_SAVING_CHUNKS 1004
 
 //=============================================================================
+// INetworkPlayer - full definition needed since server code calls methods through this pointer
+//=============================================================================
+#include "../Common/Network/NetworkPlayerInterface.h"
+
+//=============================================================================
 // Forward declarations for Network types
 // Note: These are defined in Minecraft.Client headers - do NOT define stubs here
 //=============================================================================
-class INetworkPlayer;
 class CPlatformNetworkManager;
 class CPlatformNetworkManagerStub;
 struct FriendSessionInfo;
