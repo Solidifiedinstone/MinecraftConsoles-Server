@@ -19,6 +19,7 @@
 #include "../../Minecraft.World/Vec3.h"
 #include "../../Minecraft.World/IntCache.h"
 #include "../../Minecraft.World/compression.h"
+#include "../../Minecraft.World/TilePos.h"
 #include "../../Minecraft.World/FireworksRecipe.h"
 #include "../../Minecraft.World/OldChunkStorage.h"
 #include "../../Minecraft.World/net.minecraft.world.level.tile.h"
