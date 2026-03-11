@@ -3,6 +3,7 @@
 #include "CompoundGameRuleDefinition.h"
 
 class NamedAreaRuleDefinition;
+class StringTable;
 
 class LevelRuleset : public CompoundGameRuleDefinition
 {
