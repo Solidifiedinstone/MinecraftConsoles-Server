@@ -132,6 +132,18 @@ typedef VOID* XMEMDECOMPRESSION_CONTEXT;
 typedef VOID* XMEMCOMPRESSION_CONTEXT;
 typedef enum _XMEMCODEC_TYPE { XMEMCODEC_DEFAULT = 0, XMEMCODEC_LZX = 1 } XMEMCODEC_TYPE;
 typedef struct _XMEMCODEC_PARAMETERS_LZX { DWORD Flags; DWORD WindowSize; DWORD CompressionPartitionSize; } XMEMCODEC_PARAMETERS_LZX;
+// XMem function stubs (defined here so they're available from the PCH)
+inline void XMemCpy(void* dst, const void* src, size_t sz) { memcpy(dst, src, sz); }
+inline void XMemSet(void* dst, int val, size_t sz) { memset(dst, val, sz); }
+inline void XMemSet128(void* dst, int val, size_t sz) { memset(dst, val, sz); }
+inline void* XPhysicalAlloc(SIZE_T sz, ULONG_PTR, ULONG_PTR, DWORD) { return malloc(sz); }
+inline void XPhysicalFree(void* p) { free(p); }
+inline HRESULT XMemCreateCompressionContext(XMEMCODEC_TYPE, const VOID*, DWORD, XMEMCOMPRESSION_CONTEXT* pp) { if(pp) *pp = nullptr; return S_OK; }
+inline HRESULT XMemCreateDecompressionContext(XMEMCODEC_TYPE, const VOID*, DWORD, XMEMDECOMPRESSION_CONTEXT* pp) { if(pp) *pp = nullptr; return S_OK; }
+inline HRESULT XMemCompress(XMEMCOMPRESSION_CONTEXT, VOID*, SIZE_T*, const VOID*, SIZE_T) { return E_FAIL; }
+inline HRESULT XMemDecompress(XMEMDECOMPRESSION_CONTEXT, VOID*, SIZE_T*, const VOID*, SIZE_T) { return E_FAIL; }
+inline void XMemDestroyCompressionContext(XMEMCOMPRESSION_CONTEXT) {}
+inline void XMemDestroyDecompressionContext(XMEMDECOMPRESSION_CONTEXT) {}
 #endif
 #include "extraX64.h"
 #else

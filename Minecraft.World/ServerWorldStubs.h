@@ -84,27 +84,9 @@ inline void PIXSetMarkerDeprecated(int, char*, ...) {}
 // XMem / XPhysical function stubs
 // Needed by ByteArrayInputStream.cpp, ByteArrayOutputStream.cpp,
 //           CompressedTileStorage.cpp, FlatLevelSource.cpp, etc.
-//=============================================================================
-#ifndef _SERVER_XMEM_DEFINED
-#define _SERVER_XMEM_DEFINED
-#include <cstring>
-#include <cstdlib>
-inline void XMemCpy(void* dst, const void* src, size_t sz) { memcpy(dst, src, sz); }
-inline void XMemSet(void* dst, int val, size_t sz) { memset(dst, val, sz); }
-inline void XMemSet128(void* dst, int val, size_t sz) { memset(dst, val, sz); }
-inline void* XPhysicalAlloc(SIZE_T sz, ULONG_PTR, ULONG_PTR, DWORD) { return malloc(sz); }
-inline void XPhysicalFree(void* p) { free(p); }
-#endif
-
-// XMem compression function stubs (needed by compression.cpp)
-// Types (XMEMCODEC_TYPE, XMEMCOMPRESSION_CONTEXT, etc.) are defined in stdafx.h
-// before extraX64.h is included, so only function implementations are needed here.
-inline HRESULT XMemCreateCompressionContext(XMEMCODEC_TYPE, const VOID*, DWORD, XMEMCOMPRESSION_CONTEXT* pp) { if(pp) *pp = nullptr; return S_OK; }
-inline HRESULT XMemCreateDecompressionContext(XMEMCODEC_TYPE, const VOID*, DWORD, XMEMDECOMPRESSION_CONTEXT* pp) { if(pp) *pp = nullptr; return S_OK; }
-inline HRESULT XMemCompress(XMEMCOMPRESSION_CONTEXT, VOID*, SIZE_T*, const VOID*, SIZE_T) { return E_FAIL; }
-inline HRESULT XMemDecompress(XMEMDECOMPRESSION_CONTEXT, VOID*, SIZE_T*, const VOID*, SIZE_T) { return E_FAIL; }
-inline void XMemDestroyCompressionContext(XMEMCOMPRESSION_CONTEXT) {}
-inline void XMemDestroyDecompressionContext(XMEMDECOMPRESSION_CONTEXT) {}
+// All XMem types and function stubs are now defined in stdafx.h before extraX64.h
+// (inside the _DEDICATED_SERVER && !_SERVER_XMEM_DEFINED guard block).
+// Nothing more needed here for XMem.
 
 // XSetThreadProcessor stub (needed by C4JThread.cpp)
 #ifndef XSetThreadProcessor

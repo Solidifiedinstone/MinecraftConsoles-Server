@@ -45,6 +45,7 @@ class PsPlusUpsellWrapper;
 
 using namespace std;
 
+#ifndef _DEDICATED_SERVER
 class Minecraft
 {
 private:
@@ -346,3 +347,4 @@ public:
 	static int MustSignInReturnedPSN(void *pParam, int iPad, C4JStorage::EMessageResult result);
 #endif
 };
+#endif // !_DEDICATED_SERVER
