@@ -3,6 +3,7 @@
 #include "ConsoleSaveFileIO.h"
 #include "LevelData.h"
 #include "McRegionChunkStorage.h"
+#include "FireworksRecipe.h"
 
 CRITICAL_SECTION		McRegionChunkStorage::cs_memory;
 
@@ -355,6 +356,8 @@ void McRegionChunkStorage::staticCtor()
 int McRegionChunkStorage::runSaveThreadProc(LPVOID lpParam)
 {
 	Compression::CreateNewThreadStorage();
+	FireworksRecipe::UseDefaultThreadStorage();
+	OldChunkStorage::UseDefaultThreadStorage();
 
 	bool running = true;
 	size_t lastQueueSize = 0;

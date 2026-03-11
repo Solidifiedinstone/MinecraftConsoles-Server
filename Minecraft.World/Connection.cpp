@@ -5,6 +5,8 @@
 #include "ThreadName.h"
 #include "compression.h"
 #include "..\Minecraft.Client\PS3\PS3Extras\ShutdownManager.h"
+#include "FireworksRecipe.h"
+#include "OldChunkStorage.h"
 
 // This should always be enabled, except for debugging use
 #ifndef _DEBUG
@@ -341,7 +343,7 @@ bool Connection::readTick()
 //		printf("Con:0x%x readTick close EOS\n",this);
 
 		// 4J Stu - Remove this line
-		// Fix for #10410 - UI: If the player is removed from a splitscreened host’s game, the next game that player joins will produce a message stating that the host has left.
+		// Fix for #10410 - UI: If the player is removed from a splitscreened hostï¿½s game, the next game that player joins will produce a message stating that the host has left.
 		//close(DisconnectPacket::eDisconnect_EndOfStream);
 	}
 
@@ -576,6 +578,8 @@ int Connection::runRead(void* lpParam)
 	}
 
 	Compression::UseDefaultThreadStorage();
+	FireworksRecipe::UseDefaultThreadStorage();
+	OldChunkStorage::UseDefaultThreadStorage();
 
 	CRITICAL_SECTION *cs = &con->threadCounterLock;
 
@@ -624,6 +628,8 @@ int Connection::runWrite(void* lpParam)
 	}
 
 	Compression::UseDefaultThreadStorage();
+	FireworksRecipe::UseDefaultThreadStorage();
+	OldChunkStorage::UseDefaultThreadStorage();
 
 	CRITICAL_SECTION *cs = &con->threadCounterLock;
 

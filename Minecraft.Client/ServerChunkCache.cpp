@@ -10,6 +10,7 @@
 #include "..\Minecraft.World\ProgressListener.h"
 #include "..\Minecraft.World\ThreadName.h"
 #include "..\Minecraft.World\compression.h"
+#include "..\Minecraft.World\FireworksRecipe.h"
 #include "..\Minecraft.World\OldChunkStorage.h"
 #include "..\Minecraft.World\Tile.h"
 
@@ -1003,11 +1004,13 @@ int ServerChunkCache::runSaveThreadProc(LPVOID lpParam)
 	if(params->useSharedThreadStorage)
 	{
 		Compression::UseDefaultThreadStorage();
+		FireworksRecipe::UseDefaultThreadStorage();
 		OldChunkStorage::UseDefaultThreadStorage();
 	}
 	else
 	{
 		Compression::CreateNewThreadStorage();
+		FireworksRecipe::UseDefaultThreadStorage();
 		OldChunkStorage::CreateNewThreadStorage();
 	}
 

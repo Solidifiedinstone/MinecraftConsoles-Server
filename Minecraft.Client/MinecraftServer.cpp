@@ -47,6 +47,8 @@
 #include "..\Minecraft.World\SparseLightStorage.h"
 #include "..\Minecraft.World\SparseDataStorage.h"
 #include "..\Minecraft.World\compression.h"
+#include "..\Minecraft.World\FireworksRecipe.h"
+#include "..\Minecraft.World\OldChunkStorage.h"
 #ifdef _XBOX
 #include "Common\XUI\XUI_DebugSetCamera.h"
 #endif
@@ -307,6 +309,8 @@ int MinecraftServer::runPostUpdate(void* lpParam)
 	AABB::CreateNewThreadStorage();
 	Vec3::CreateNewThreadStorage();	
 	Compression::UseDefaultThreadStorage();
+	FireworksRecipe::UseDefaultThreadStorage();
+	OldChunkStorage::UseDefaultThreadStorage();
 	Level::enableLightingCache();
 	Tile::CreateNewThreadStorage();
 
