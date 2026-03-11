@@ -4668,9 +4668,6 @@
     </ClCompile>
     <ClCompile Include="ZoomLayer.cpp" />
   </ItemGroup>
-  <ItemGroup>
-    <SDKReference Include="Xbox Services API, Version=8.0" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
