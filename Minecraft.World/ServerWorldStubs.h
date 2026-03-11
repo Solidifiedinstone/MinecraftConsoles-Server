@@ -516,8 +516,15 @@ namespace ShutdownManager {
 #ifndef _MINECRAFT_STUB_DEFINED
 #define _MINECRAFT_STUB_DEFINED
 class MultiPlayerLevel;
+class MultiplayerLocalPlayer;
+class ProgressRenderer;
 class Minecraft {
 public:
+    // Members accessed by World lib files
+    shared_ptr<MultiplayerLocalPlayer> player;
+    shared_ptr<MultiplayerLocalPlayer> localplayers[XUSER_MAX_COUNT];
+    ProgressRenderer* progressRenderer = nullptr;
+
     static Minecraft* GetInstance() {
         static Minecraft s;
         return &s;
