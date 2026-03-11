@@ -193,7 +193,7 @@ int wmain(int argc, wchar_t* argv[])
 	AABB::CreateNewThreadStorage();
 	Vec3::CreateNewThreadStorage();
 	IntCache::CreateNewThreadStorage();
-	Compression::UseDefaultThreadStorage();
+	Compression::CreateNewThreadStorage();
 	Entity::useSmallIds();
 	// Note: Level::enableLightingCache() not needed for headless server
 	Tile::CreateNewThreadStorage();
