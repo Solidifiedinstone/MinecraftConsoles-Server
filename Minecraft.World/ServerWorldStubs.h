@@ -2,6 +2,13 @@
 // ServerWorldStubs.h - Server build stubs for Minecraft.World
 // Included from Minecraft.World/stdafx.h when _DEDICATED_SERVER is defined.
 // Provides client-side types needed by World code that are unavailable for server builds.
+//
+// IMPORTANT: When Minecraft.Client server .cpp files are compiled with /FI stdafx_server.h,
+// they may also include Minecraft.World/stdafx.h (which includes this file). Since
+// stdafx_server.h already provides all these stubs, we skip this entire file in that case.
+#ifdef _STDAFX_SERVER_H_INCLUDED
+// stdafx_server.h already provides all stubs - skip to avoid redefinition errors
+#else // !_STDAFX_SERVER_H_INCLUDED - World-only build, provide stubs
 
 //=============================================================================
 // C4JRender stub namespace
@@ -404,3 +411,5 @@ namespace ShutdownManager {
 // Included from PSVitaMedia/strings.h which has the canonical set of IDS_ defines
 //=============================================================================
 #include "..\Minecraft.Client\PSVitaMedia\strings.h"
+
+#endif // !_STDAFX_SERVER_H_INCLUDED

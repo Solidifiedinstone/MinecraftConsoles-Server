@@ -3,6 +3,10 @@
 
 #pragma once
 
+// Mark that stdafx_server.h has been included.
+// ServerWorldStubs.h checks this to avoid redefining types already defined here.
+#define _STDAFX_SERVER_H_INCLUDED
+
 // Force dedicated server mode
 #ifndef _DEDICATED_SERVER
 #define _DEDICATED_SERVER 1
