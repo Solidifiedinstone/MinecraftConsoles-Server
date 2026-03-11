@@ -1026,6 +1026,7 @@ void ServerLevel::saveToDisc(ProgressListener *progressListener, bool autosave)
 	// 4J-PB - check that saves are enabled
 	if(StorageManager.GetSaveDisabled()) return;
 
+#ifndef _DEDICATED_SERVER
 	// Check if we are using a trial version of a texture pack (which will be the case for going into the mash-up pack world with a trial version)
 	if(!Minecraft::GetInstance()->skins->isUsingDefaultSkin())
 	{
@@ -1035,10 +1036,11 @@ void ServerLevel::saveToDisc(ProgressListener *progressListener, bool autosave)
 		DLCPack * pDLCPack=pDLCTexPack->getDLCInfoParentPack();
 
 		if(!pDLCPack->hasPurchasedFile( DLCManager::e_DLCType_Texture, L"" ))
-		{	
+		{
 			return;
 		}
 	}
+#endif
 
 	if (progressListener != NULL) progressListener->progressStage(IDS_PROGRESS_SAVING_TO_DISC);
 	levelStorage->flushSaveFile(autosave);

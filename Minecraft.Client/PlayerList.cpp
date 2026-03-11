@@ -227,7 +227,7 @@ void PlayerList::placeNewPlayer(Connection *connection, shared_ptr<ServerPlayer>
 	sendLevelInfo(player, level);
 
 	// 4J-PB - removed, since it needs to be localised in the language the client is in
-	//server->players->broadcastAll( shared_ptr<ChatPacket>( new ChatPacket(L"§e" + playerEntity->name + L" joined the game.") ) );
+	//server->players->broadcastAll( shared_ptr<ChatPacket>( new ChatPacket(L"ï¿½e" + playerEntity->name + L" joined the game.") ) );
 	broadcastAll( shared_ptr<ChatPacket>( new ChatPacket(player->name, ChatPacket::e_ChatPlayerJoinedGame) ) );
 
 	MemSect(14);
@@ -428,7 +428,7 @@ void PlayerList::add(shared_ptr<ServerPlayer> player)
 	// Some code from here has been moved to the above validatePlayerSpawnPosition function
 
 	// 4J Stu - Swapped these lines about so that we get the chunk visiblity packet way ahead of all the add tracked entity packets
-	// Fix for #9169 - ART : Sign text is replaced with the words “Awaiting approval”.
+	// Fix for #9169 - ART : Sign text is replaced with the words ï¿½Awaiting approvalï¿½.
 	changeDimension(player, NULL);
 	level->addEntity(player);
 
@@ -698,11 +698,13 @@ shared_ptr<ServerPlayer> PlayerList::respawn(shared_ptr<ServerPlayer> serverPlay
 
 	// 4J-JEV - Dying before this point in the tutorial is pretty annoying,
 	// making sure to remove health/hunger and give you back your meat.
-	if( Minecraft::GetInstance()->isTutorial() 
+#ifndef _DEDICATED_SERVER
+	if( Minecraft::GetInstance()->isTutorial()
 		&& (!Minecraft::GetInstance()->gameMode->getTutorial()->isStateCompleted(e_Tutorial_State_Food_Bar)) )
 	{
 		app.getGameRuleDefinitions()->postProcessPlayer(player);
 	}
+#endif
 
 	if( oldDimension == 1 && player->dimension != 1 )
 	{

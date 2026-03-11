@@ -385,6 +385,7 @@ public:
     void AllowedPlayerCreatedContent(int, bool, BOOL*, BOOL*) { }
     void DisplaySystemMessage(int, int) {}
     PlayerUID GetPlayerUID(int) { return 0; }
+    bool AreXUIDSEqual(PlayerUID a, PlayerUID b) { return a == b; }
     static CProfileManager& GetInstance() { static CProfileManager inst; return inst; }
 };
 #define ProfileManager CProfileManager::GetInstance()
@@ -492,7 +493,6 @@ class IggyBitmapFontProvider {};
 // Forward declarations for GUI/Rendering and other client types
 // Note: These types are defined in Minecraft.Client headers - do NOT define stubs here
 //=============================================================================
-class StringTable;
 class ColourTable;
 struct STRING_VERIFY_RESPONSE;
 class LevelChunk;
@@ -512,6 +512,24 @@ class MultiPlayerGameMode;
 class MultiplayerLocalPlayer;
 class Packet;
 class Minecraft;
+class LocalPlayer;
+class DLCPack;
+class DLCSkinFile;
+struct SKIN_BOX;
+
+// Minimal StringTable stub - DLCTexturePack.h calls getString() through pointer
+class StringTable {
+public:
+    wstring getString(const wstring& key) { return L""; }
+    wstring getString(const wstring& key, const wstring& defaultVal) { return defaultVal; }
+    bool hasString(const wstring& key) { return false; }
+};
+
+// CDLCManager stub - DLC skin management (not needed for dedicated server)
+class CDLCManager {
+public:
+    DLCSkinFile* getSkinFile(const wstring&) { return nullptr; }
+};
 
 // ProgressRenderer - server-safe stub (replaces client ProgressRenderer.h)
 // Must have a default constructor since HeadlessProgressRenderer inherits from it
@@ -565,9 +583,25 @@ public:
 class CMinecraftApp {
 public:
     GameRuleManager m_gameRules;
+    CDLCManager m_dlcManager;
     DWORD m_hostOptions[eGameHostOption_Max];
 
     CMinecraftApp() { memset(m_hostOptions, 0, sizeof(m_hostOptions)); }
+
+    // 2-arg version: unpack specific option from a packed settings DWORD
+    DWORD GetGameHostOption(DWORD packed, eGameHostOption opt) const {
+        switch(opt) {
+            case eGameHostOption_GameType: return packed & 0x1;
+            case eGameHostOption_Difficulty: return (packed >> 1) & 0x3;
+            case eGameHostOption_PvP: return (packed >> 3) & 0x1;
+            case eGameHostOption_FireSpreads: return (packed >> 4) & 0x1;
+            case eGameHostOption_TNT: return (packed >> 5) & 0x1;
+            case eGameHostOption_Structures: return (packed >> 6) & 0x1;
+            case eGameHostOption_BonusChest: return (packed >> 7) & 0x1;
+            case eGameHostOption_LevelType: return (packed >> 8) & 0x1;
+            default: return 0;
+        }
+    }
 
     DWORD GetGameHostOption(eGameHostOption opt) const {
         if (opt == eGameHostOption_All) {
@@ -617,6 +651,7 @@ public:
     void processSchematicsLighting(LevelChunk*) {}
     LevelGenerationOptions* getLevelGenerationOptions() { return m_gameRules.getLevelGenerationOptions(); }
     bool DebugSettingsOn() { return false; }
+    int GetGameSettingsDebugMask() { return 0; }
     int GetGameSettingsDebugMask(int) { return 0; }
     bool GetTerrainFeaturePosition(_eTerrainFeatureType, int* px, int* pz) { return false; }
     eXuiServerAction GetXuiServerAction(int) { return eXuiServerAction_Idle; }
@@ -625,6 +660,14 @@ public:
     bool isTutorial() { return false; }
     int GetGameNewWorldSize() { return 0; }
     bool GetGameNewWorldSizeUseMoat() { return false; }
+    void GetMemFileDetails(const wstring&, PBYTE* pbData, DWORD* dwBytes) {
+        if(pbData) *pbData = NULL; if(dwBytes) *dwBytes = 0;
+    }
+    vector<SKIN_BOX*>* GetAdditionalSkinBoxes(DWORD) { return nullptr; }
+    unsigned int GetAnimOverrideBitmask(DWORD) { return 0; }
+    void SetAdditionalSkinBoxes(DWORD, void*, int) {}
+    void SetAnimOverrideBitmask(DWORD, unsigned int) {}
+    int getSkinIdFromPath(const wstring&) { return 0; }
 };
 
 extern CMinecraftApp app;
@@ -694,6 +737,12 @@ inline void MemSect(int) {}
 #define IDS_PROGRESS_GENERATING_SPAWN_AREA 1002
 #define IDS_PROGRESS_LOADING_SPAWN_AREA 1003
 #define IDS_PROGRESS_SAVING_CHUNKS 1004
+#define IDS_PROGRESS_AUTOSAVING_LEVEL 1005
+#define IDS_PROGRESS_SAVING_LEVEL 1006
+#define IDS_PROGRESS_SAVING_TO_DISC 1007
+#define IDS_PROGRESS_SAVING_PLAYERS 1008
+#define IDS_PLAYER_LEFT_END 1009
+#define IDS_PLAYER_ENTERED_END 1010
 
 //=============================================================================
 // INetworkPlayer - full definition needed since server code calls methods through this pointer
