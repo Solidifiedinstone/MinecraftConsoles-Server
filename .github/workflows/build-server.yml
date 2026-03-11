@@ -40,8 +40,8 @@ jobs:
       with:
         name: Minecraft.Server
         path: |
-          Release_Server/Minecraft.Server.exe
-          Release_Server/*.dll
+          Minecraft.Client/Release_Server/Minecraft.Server.exe
+          Minecraft.Client/Release_Server/*.dll
         if-no-files-found: warn
 
   build-debug:
@@ -72,7 +72,7 @@ jobs:
       with:
         name: Minecraft.Server-Debug
         path: |
-          Debug_Server/Minecraft.Server.exe
-          Debug_Server/*.dll
-          Debug_Server/*.pdb
+          Minecraft.Client/Debug_Server/Minecraft.Server.exe
+          Minecraft.Client/Debug_Server/*.dll
+          Minecraft.Client/Debug_Server/*.pdb
         if-no-files-found: warn
