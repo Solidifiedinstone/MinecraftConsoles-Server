@@ -212,8 +212,9 @@ typedef bool boolean;
 
 //=============================================================================
 // hash_value - needed by Hasher.cpp, Player.cpp
-// MSVC doesn't have std::hash_value; provide it via std::hash in both global
-// and std namespaces (Player.cpp uses std::hash_value)
+// MSVC doesn't have std::hash_value; provide it via std::hash in global
+// namespace, then bring it into std:: via a using-declaration so that
+// std::hash_value (Player.cpp line 2715) resolves without ambiguity.
 //=============================================================================
 #ifndef _HASH_VALUE_DEFINED
 #define _HASH_VALUE_DEFINED
@@ -221,9 +222,21 @@ typedef bool boolean;
 template<typename T>
 inline size_t hash_value(const T& v) { return std::hash<T>()(v); }
 namespace std {
-	template<typename T>
-	inline size_t hash_value(const T& v) { return std::hash<T>()(v); }
+	using ::hash_value;
 }
+#endif
+
+//=============================================================================
+// XRNM_SEND_BUFFER - needed by Socket.cpp
+// extraX64.h wraps this in #ifndef _DEDICATED_SERVER, and stdafx_server.h
+// provides it for the Server project. Provide it here for World-only builds.
+//=============================================================================
+#ifndef XRNM_SEND_BUFFER_DEFINED
+#define XRNM_SEND_BUFFER_DEFINED
+struct XRNM_SEND_BUFFER {
+	DWORD dwDataSize;
+	BYTE* pbyData;
+};
 #endif
 
 //=============================================================================
