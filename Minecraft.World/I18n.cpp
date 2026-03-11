@@ -5,7 +5,7 @@
 Language *I18n::lang = Language::getInstance();
 wstring I18n::get(const wstring& id, ...)
 {
-#ifdef __PSVITA__		// 4J - vita doesn't like having a reference type as the last parameter passed to va_start - we shouldn't need this method anyway
+#if defined(__PSVITA__) || defined(_DEDICATED_SERVER)		// 4J - vita doesn't like having a reference type as the last parameter passed to va_start - we shouldn't need this method anyway
 	return L"";
 #else
 	va_list va;

@@ -122,6 +122,21 @@ class LocalPlayer;
 class LevelChunk;
 class LevelRuleset;
 class LevelGenerationOptions;
+class ModelPart;
+struct MOJANG_DATA;
+class DLCSkinFile;
+
+//=============================================================================
+// CDLCManager stub
+// Needed by Player.cpp (app.m_dlcManager.getSkinFile(...))
+//=============================================================================
+#ifndef _CDLCMANAGER_STUB_DEFINED
+#define _CDLCMANAGER_STUB_DEFINED
+class CDLCManager {
+public:
+	DLCSkinFile* getSkinFile(const wstring&) { return NULL; }
+};
+#endif
 
 //=============================================================================
 // STRING_VERIFY_RESPONSE stub
@@ -130,7 +145,8 @@ class LevelGenerationOptions;
 #ifndef STRING_VERIFY_RESPONSE_DEFINED
 #define STRING_VERIFY_RESPONSE_DEFINED
 struct STRING_VERIFY_RESPONSE {
-	int result;
+	DWORD wNumStrings;
+	DWORD *pStringResult;
 	wchar_t *pszVerifiedString;
 };
 #endif
@@ -196,13 +212,18 @@ typedef bool boolean;
 
 //=============================================================================
 // hash_value - needed by Hasher.cpp, Player.cpp
-// MSVC doesn't have std::hash_value; provide it via std::hash
+// MSVC doesn't have std::hash_value; provide it via std::hash in both global
+// and std namespaces (Player.cpp uses std::hash_value)
 //=============================================================================
 #ifndef _HASH_VALUE_DEFINED
 #define _HASH_VALUE_DEFINED
 #include <functional>
 template<typename T>
 inline size_t hash_value(const T& v) { return std::hash<T>()(v); }
+namespace std {
+	template<typename T>
+	inline size_t hash_value(const T& v) { return std::hash<T>()(v); }
+}
 #endif
 
 //=============================================================================
@@ -302,6 +323,24 @@ public:
 	eXuiServerAction GetXuiServerAction(int) { return eXuiServerAction_Idle; }
 	LPVOID GetXuiServerActionParam(int) { return NULL; }
 	void SetXuiServerAction(int, eXuiServerAction) {}
+
+	// Skin helpers (needed by Player.cpp)
+	wstring getSkinPathFromId(DWORD) { return L""; }
+	unsigned int GetAnimOverrideBitmask(DWORD) { return 0; }
+	MOJANG_DATA* GetMojangDataForXuid(PlayerUID) { return NULL; }
+	bool DefaultCapeExists() { return false; }
+	vector<ModelPart*>* GetAdditionalModelParts(DWORD) { return NULL; }
+	vector<ModelPart*>* SetAdditionalSkinBoxes(DWORD, void*) { return NULL; }
+	void SetAnimOverrideBitmask(DWORD, DWORD) {}
+
+	// Network / save helpers
+	void SetUniqueMapName(char*) {}
+
+	// Skin name list (needed by Player.cpp)
+	vector<wstring> vSkinNames;
+
+	// DLC manager (needed by Player.cpp)
+	CDLCManager m_dlcManager;
 };
 #endif // _CMINECRAFTAPP_DEFINED
 
@@ -420,12 +459,20 @@ extern CGameNetworkManager n;
 class DispenserTileEntity;
 
 //=============================================================================
-// MAKE_SKIN_BITMASK macro
-// Normally defined in Minecraft_Macros.h (not included for dedicated server builds)
-// Needed by TextureAndGeometryChangePacket.cpp, TextureAndGeometryPacket.cpp
+// Minecraft_Macros.h - include directly
+// Provides MAKE_SKIN_BITMASK, GET_IS_DLC_SKIN_FROM_BITMASK, GET_DLC_SKIN_ID_FROM_BITMASK,
+// GET_UGC_SKIN_ID_FROM_BITMASK, GET_DEFAULT_SKIN_ID_FROM_BITMASK, etc.
+// Normally included via stdafx.h for non-_DEDICATED_SERVER builds.
 //=============================================================================
-#ifndef MAKE_SKIN_BITMASK
-#define MAKE_SKIN_BITMASK(bDlcSkin, dwSkinId) (((bDlcSkin) ? 0x80000000 : 0) | ((dwSkinId) & 0x7FFFFFFF))
+#include "..\Minecraft.Client\Common\Minecraft_Macros.h"
+
+//=============================================================================
+// MINECRAFT_NET_VERSION - network protocol version constant
+// Normally defined via PlatformNetworkManagerInterface.h as VER_NETWORK.
+// Needed by PreLoginPacket.cpp
+//=============================================================================
+#ifndef MINECRAFT_NET_VERSION
+#define MINECRAFT_NET_VERSION 0x0113
 #endif
 
 //=============================================================================
