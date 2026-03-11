@@ -21,6 +21,7 @@
 #include "../../Minecraft.World/compression.h"
 #include "../../Minecraft.World/net.minecraft.world.level.tile.h"
 #include "../../Minecraft.World/Entity.h"
+#include "../../Minecraft.World/Minecraft.World.h"
 
 #include <csignal>
 #include <iostream>
@@ -193,6 +194,9 @@ int wmain(int argc, wchar_t* argv[])
 	Entity::useSmallIds();
 	// Note: Level::enableLightingCache() not needed for headless server
 	Tile::CreateNewThreadStorage();
+
+	// Initialize all World lib static singletons (LevelType, Tile, Item, Biome, etc.)
+	MinecraftWorld_RunStaticCtors();
 
 	// Create and run dedicated server
 	LogWithTimestamp(L"INFO", L"Starting dedicated server...");
