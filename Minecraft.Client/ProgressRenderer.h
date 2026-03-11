@@ -1,6 +1,9 @@
 #pragma once
 #include "..\Minecraft.World\ProgressListener.h"
 
+// In dedicated server World-only builds, ServerWorldStubs.h provides a no-op stub.
+// Skip the real definition to avoid C2011 redefinition errors.
+#ifndef _PROGRESSRENDERER_STUB_DEFINED
 class ProgressRenderer : public ProgressListener
 {
 public:
@@ -41,3 +44,4 @@ public:
 	virtual void progressStage(wstring &wstrText);
     virtual void progressStagePercentage(int i);
 };
+#endif // _PROGRESSRENDERER_STUB_DEFINED

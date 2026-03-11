@@ -517,8 +517,10 @@ namespace ShutdownManager {
 #define _MINECRAFT_STUB_DEFINED
 class MultiPlayerLevel;
 class MultiplayerLocalPlayer;
-// No-op ProgressRenderer for server builds (World lib calls it during world gen)
+// No-op ProgressRenderer for server builds (World lib calls it during world gen).
+// _PROGRESSRENDERER_STUB_DEFINED tells ProgressRenderer.h to skip its real definition.
 #include "ProgressListener.h"
+#define _PROGRESSRENDERER_STUB_DEFINED
 class ProgressRenderer : public ProgressListener {
 public:
     virtual void progressStagePercentage(int) {}
