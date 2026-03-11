@@ -517,16 +517,27 @@ namespace ShutdownManager {
 #define _MINECRAFT_STUB_DEFINED
 class MultiPlayerLevel;
 class MultiplayerLocalPlayer;
-class ProgressRenderer;
+// No-op ProgressRenderer for server builds (World lib calls it during world gen)
+#include "ProgressListener.h"
+class ProgressRenderer : public ProgressListener {
+public:
+    virtual void progressStagePercentage(int) {}
+    virtual void progressStart(int) {}
+    virtual void progressStartNoAbort(int) {}
+    virtual void progressStage(int) {}
+    virtual void progressStage(wstring&) {}
+};
 class Minecraft {
 public:
     // Members accessed by World lib files
     shared_ptr<MultiplayerLocalPlayer> player;
     shared_ptr<MultiplayerLocalPlayer> localplayers[XUSER_MAX_COUNT];
-    ProgressRenderer* progressRenderer = nullptr;
+    ProgressRenderer* progressRenderer;
 
     static Minecraft* GetInstance() {
+        static ProgressRenderer s_pr;
         static Minecraft s;
+        if (!s.progressRenderer) s.progressRenderer = &s_pr;
         return &s;
     }
     ColourTable* getColourTable() {
