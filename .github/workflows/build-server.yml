@@ -28,7 +28,7 @@ jobs:
 
     - name: Build Minecraft.World (Release x64)
       run: |
-        msbuild Minecraft.World/Minecraft.World.vcxproj /p:Configuration=Release /p:Platform=x64 /t:Build
+        msbuild Minecraft.World/Minecraft.World.vcxproj /p:Configuration=Release /p:Platform=x64 /p:PlatformToolset=v143 /t:Build
       continue-on-error: true
 
     - name: Build Dedicated Server (Release x64)
@@ -60,7 +60,7 @@ jobs:
 
     - name: Build Minecraft.World (Debug x64)
       run: |
-        msbuild Minecraft.World/Minecraft.World.vcxproj /p:Configuration=Debug /p:Platform=x64 /t:Build
+        msbuild Minecraft.World/Minecraft.World.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:PlatformToolset=v143 /t:Build
       continue-on-error: true
 
     - name: Build Dedicated Server (Debug x64)
