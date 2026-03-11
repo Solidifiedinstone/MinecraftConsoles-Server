@@ -329,6 +329,15 @@ void ColourTable::staticCtor()
 	}
 }
 
+ColourTable::ColourTable()
+{
+    // Initialize all colors to white for server builds
+    for (int i = 0; i < eMinecraftColour_COUNT; i++)
+    {
+        m_colourValues[i] = 0xFFFFFF;
+    }
+}
+
 ColourTable::ColourTable(PBYTE pbData, DWORD dwLength)
 {
 	loadColoursFromData(pbData, dwLength);

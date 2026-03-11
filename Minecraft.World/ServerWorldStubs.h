@@ -96,6 +96,29 @@ inline void* XPhysicalAlloc(SIZE_T sz, ULONG_PTR, ULONG_PTR, DWORD) { return mal
 inline void XPhysicalFree(void* p) { free(p); }
 #endif
 
+// XMem compression types and function stubs (needed by compression.cpp)
+// XMemCpy/XMemSet already above; these are the compression-specific XMem functions
+#ifndef _SERVER_XMEM_COMPRESSION_DEFINED
+#define _SERVER_XMEM_COMPRESSION_DEFINED
+typedef VOID* XMEMCOMPRESSION_CONTEXT;
+typedef VOID* XMEMDECOMPRESSION_CONTEXT;
+typedef enum _XMEMCODEC_TYPE {
+    XMEMCODEC_DEFAULT = 0,
+    XMEMCODEC_LZX = 1
+} XMEMCODEC_TYPE;
+typedef struct _XMEMCODEC_PARAMETERS_LZX {
+    DWORD Flags;
+    DWORD WindowSize;
+    DWORD CompressionPartitionSize;
+} XMEMCODEC_PARAMETERS_LZX;
+inline HRESULT XMemCreateCompressionContext(XMEMCODEC_TYPE, const VOID*, DWORD, XMEMCOMPRESSION_CONTEXT* pp) { if(pp) *pp = nullptr; return S_OK; }
+inline HRESULT XMemCreateDecompressionContext(XMEMCODEC_TYPE, const VOID*, DWORD, XMEMDECOMPRESSION_CONTEXT* pp) { if(pp) *pp = nullptr; return S_OK; }
+inline HRESULT XMemCompress(XMEMCOMPRESSION_CONTEXT, VOID*, SIZE_T*, const VOID*, SIZE_T) { return E_FAIL; }
+inline HRESULT XMemDecompress(XMEMDECOMPRESSION_CONTEXT, VOID*, SIZE_T*, const VOID*, SIZE_T) { return E_FAIL; }
+inline void XMemDestroyCompressionContext(XMEMCOMPRESSION_CONTEXT) {}
+inline void XMemDestroyDecompressionContext(XMEMDECOMPRESSION_CONTEXT) {}
+#endif // _SERVER_XMEM_COMPRESSION_DEFINED
+
 // XSetThreadProcessor stub (needed by C4JThread.cpp)
 #ifndef XSetThreadProcessor
 inline void XSetThreadProcessor(HANDLE, int) {}
@@ -514,5 +537,30 @@ namespace ShutdownManager {
 // Included from PSVitaMedia/strings.h which has the canonical set of IDS_ defines
 //=============================================================================
 #include "..\Minecraft.Client\PSVitaMedia\strings.h"
+
+//=============================================================================
+// Minecraft singleton stub
+// Needed by ~22 World lib files that call Minecraft::GetInstance() for
+// color/rendering/misc operations. The stub returns safe default values.
+// Only used in World-only builds (_STDAFX_SERVER_H_INCLUDED not set).
+//=============================================================================
+#ifndef _MINECRAFT_STUB_DEFINED
+#define _MINECRAFT_STUB_DEFINED
+class MultiPlayerLevel;
+class Minecraft {
+public:
+    static Minecraft* GetInstance() {
+        static Minecraft s;
+        return &s;
+    }
+    ColourTable* getColourTable() {
+        static ColourTable s_ct;
+        return &s_ct;
+    }
+    bool isTutorial() { return false; }
+    unsigned int getCurrentTexturePackId() { return 0; }
+    MultiPlayerLevel* getLevel(int) { return nullptr; }
+};
+#endif // _MINECRAFT_STUB_DEFINED
 
 #endif // !_STDAFX_SERVER_H_INCLUDED

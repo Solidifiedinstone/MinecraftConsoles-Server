@@ -3106,6 +3106,7 @@ vector<ModelPart *> *Player::GetAdditionalModelParts()
 			// do we have it from the DLC pack?
 			DLCSkinFile *pDLCSkinFile = app.m_dlcManager.getSkinFile(this->customTextureUrl);
 
+#ifndef _DEDICATED_SERVER
 			if(pDLCSkinFile!=NULL)
 			{
 				DWORD dwBoxC=pDLCSkinFile->getAdditionalBoxesCount();
@@ -3119,6 +3120,7 @@ vector<ModelPart *> *Player::GetAdditionalModelParts()
 
 				m_bCheckedForModelParts=true;
 			}
+#endif // !_DEDICATED_SERVER
 		}
 
 		if(m_bCheckedForModelParts) setAnimOverrideBitmask(getSkinAnimOverrideBitmask(m_dwSkinId));
