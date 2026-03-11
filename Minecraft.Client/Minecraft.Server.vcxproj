@@ -123,6 +123,64 @@
     <ClCompile Include="Common\Network\GameNetworkManager.cpp" />
   </ItemGroup>
 
+  <!-- Server-side client files with implementations needed by World lib -->
+  <ItemGroup>
+    <ClCompile Include="ServerPlayerGameMode.cpp" />
+    <ClCompile Include="PendingConnection.cpp" />
+    <ClCompile Include="TrackedEntity.cpp" />
+    <ClCompile Include="Minecraft.cpp" />
+    <ClCompile Include="GameRenderer.cpp" />
+    <ClCompile Include="LevelRenderer.cpp" />
+    <ClCompile Include="StatsCounter.cpp" />
+    <ClCompile Include="TeleportCommand.cpp" />
+    <ClCompile Include="ConsoleInput.cpp" />
+    <ClCompile Include="ServerScoreboard.cpp" />
+    <ClCompile Include="Common\GameRules\LevelGenerationOptions.cpp" />
+    <ClCompile Include="Common\GameRules\GameRuleDefinition.cpp" />
+    <ClCompile Include="Common\GameRules\ConsoleSchematicFile.cpp" />
+    <ClCompile Include="Common\GameRules\GameRule.cpp" />
+    <ClCompile Include="Common\Colours\ColourTable.cpp" />
+    <ClCompile Include="Common\DLC\DLCSkinFile.cpp" />
+  </ItemGroup>
+
+  <!-- zlib sources (no prebuilt lib available) -->
+  <!-- ForcedIncludeFiles cleared so C++ stdafx_server.h doesn't break C syntax -->
+  <ItemGroup>
+    <ClCompile Include="Common\zlib\adler32.c">
+      <ForcedIncludeFiles></ForcedIncludeFiles>
+    </ClCompile>
+    <ClCompile Include="Common\zlib\compress.c">
+      <ForcedIncludeFiles></ForcedIncludeFiles>
+    </ClCompile>
+    <ClCompile Include="Common\zlib\crc32.c">
+      <ForcedIncludeFiles></ForcedIncludeFiles>
+    </ClCompile>
+    <ClCompile Include="Common\zlib\deflate.c">
+      <ForcedIncludeFiles></ForcedIncludeFiles>
+    </ClCompile>
+    <ClCompile Include="Common\zlib\infback.c">
+      <ForcedIncludeFiles></ForcedIncludeFiles>
+    </ClCompile>
+    <ClCompile Include="Common\zlib\inffast.c">
+      <ForcedIncludeFiles></ForcedIncludeFiles>
+    </ClCompile>
+    <ClCompile Include="Common\zlib\inflate.c">
+      <ForcedIncludeFiles></ForcedIncludeFiles>
+    </ClCompile>
+    <ClCompile Include="Common\zlib\inftrees.c">
+      <ForcedIncludeFiles></ForcedIncludeFiles>
+    </ClCompile>
+    <ClCompile Include="Common\zlib\trees.c">
+      <ForcedIncludeFiles></ForcedIncludeFiles>
+    </ClCompile>
+    <ClCompile Include="Common\zlib\uncompr.c">
+      <ForcedIncludeFiles></ForcedIncludeFiles>
+    </ClCompile>
+    <ClCompile Include="Common\zlib\zutil.c">
+      <ForcedIncludeFiles></ForcedIncludeFiles>
+    </ClCompile>
+  </ItemGroup>
+
   <!-- Dedicated Server headers -->
   <ItemGroup>
     <ClInclude Include="DedicatedServer\DedicatedServerApp.h" />
