@@ -137,6 +137,10 @@
     <ClCompile Include="Common\GameRules\CollectItemRuleDefinition.cpp" />
     <ClCompile Include="Common\GameRules\UseTileRuleDefinition.cpp" />
     <ClCompile Include="Common\GameRules\UpdatePlayerRuleDefinition.cpp" />
+    <ClCompile Include="Common\GameRules\AddItemRuleDefinition.cpp" />
+    <ClCompile Include="Common\GameRules\AddEnchantmentRuleDefinition.cpp" />
+    <ClCompile Include="Common\GameRules\NamedAreaRuleDefinition.cpp" />
+    <ClCompile Include="Common\GameRules\ApplySchematicRuleDefinition.cpp" />
     <ClCompile Include="Common\GameRules\ConsoleSchematicFile.cpp" />
     <ClCompile Include="Common\GameRules\GameRule.cpp" />
     <ClCompile Include="Common\Colours\ColourTable.cpp" />
