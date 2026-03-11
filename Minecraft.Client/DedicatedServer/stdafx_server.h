@@ -57,6 +57,7 @@ typedef unsigned long long __uint64;
 #ifndef _EXTRA_X64_TYPES_DEFINED
 #define _EXTRA_X64_TYPES_DEFINED
 
+#define _PLAYER_UID_DEFINED
 typedef unsigned char byte;
 typedef ULONGLONG PlayerUID;
 typedef PlayerUID GameSessionUID;
@@ -128,6 +129,7 @@ inline void PIXSetMarkerDeprecated(int, char*, ...) {}
 //=============================================================================
 // Compression stubs (extraX64.h equivalent)
 //=============================================================================
+#define _SERVER_XMEM_DEFINED
 typedef VOID* XMEMCOMPRESSION_CONTEXT;
 typedef VOID* XMEMDECOMPRESSION_CONTEXT;
 

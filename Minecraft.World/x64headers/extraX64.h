@@ -67,7 +67,16 @@ typedef ULONGLONG SessionID;
 typedef ULONGLONG GameSessionUID;
 typedef DQRNetworkManager::SessionInfo INVITE_INFO;
 #elif defined _DEDICATED_SERVER
-// Types already defined in stdafx_server.h
+// If stdafx_server.h was force-included, _PLAYER_UID_DEFINED is already set.
+// Otherwise (e.g. Minecraft.World static lib build), define the types here.
+#ifndef _PLAYER_UID_DEFINED
+#define _PLAYER_UID_DEFINED
+typedef ULONGLONG PlayerUID;
+typedef ULONGLONG SessionID;
+typedef PlayerUID GameSessionUID;
+typedef PlayerUID *PPlayerUID;
+struct INVITE_INFO { PlayerUID hostId; };
+#endif
 #else
 typedef ULONGLONG PlayerUID;
 typedef ULONGLONG SessionID;
@@ -460,7 +469,8 @@ public:
 };
 #endif // _DEDICATED_SERVER
 
-#if !defined(__ORBIS__) && !defined(_XBOX_ONE) && !defined(_DEDICATED_SERVER)
+#if !defined(__ORBIS__) && !defined(_XBOX_ONE)
+#ifndef _SERVER_XMEM_DEFINED
 typedef VOID * XMEMDECOMPRESSION_CONTEXT;
 typedef VOID * XMEMCOMPRESSION_CONTEXT;
 
@@ -509,7 +519,8 @@ typedef struct _XMEMCODEC_PARAMETERS_LZX {
 
 void XMemDestroyCompressionContext(XMEMCOMPRESSION_CONTEXT Context);
 void XMemDestroyDecompressionContext(XMEMDECOMPRESSION_CONTEXT Context);
-#endif
+#endif // _SERVER_XMEM_DEFINED
+#endif // !__ORBIS__ && !_XBOX_ONE
 
 typedef struct {
     BYTE type;

@@ -190,9 +190,7 @@ void MemSect(int sect);
 
 // Common game type headers - required by Minecraft.World regardless of build type
 // #ifdef _XBOX
-#ifndef _DEDICATED_SERVER
 #include "..\Minecraft.Client\Common\App_defines.h"
-#endif
 #include "..\Minecraft.Client\Common\UI\UIEnums.h"
 #include "..\Minecraft.Client\Common\App_enums.h"
 #include "..\Minecraft.Client\Common\Tutorial\TutorialEnum.h"

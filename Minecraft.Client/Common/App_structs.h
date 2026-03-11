@@ -210,8 +210,9 @@ typedef struct _DLCRequest
 } 
 DLCRequest;
 
+#ifndef _DEDICATED_SERVER
 typedef struct _TMSPPRequest
-{ 
+{
 	eTMSContentState eState;
 	eDLCContentType eType;
 	C4JStorage::eGlobalStorage eStorageFacility;
@@ -225,7 +226,8 @@ typedef struct _TMSPPRequest
  	WCHAR wchFilename[MAX_TMSFILENAME_SIZE];
 
 	LPVOID lpCallbackParam;
-} 
+}
 TMSPPRequest;
+#endif // _DEDICATED_SERVER
 
 typedef pair<EUIScene, HXUIOBJ> SceneStackPair;
