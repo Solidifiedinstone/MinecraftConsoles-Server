@@ -456,6 +456,7 @@ void ServerPlayer::doChunkSendingTick(bool dontDelayChunks)
 				}
 				else
 				{
+#ifndef _DEDICATED_SERVER
 					// For local connections, we'll need to copy the lighting data over from server to client at this point. This is to try and keep lighting as similar as possible to the java version,
 					// where client & server are individually responsible for maintaining their lighting (since 1.2.3). This is really an alternative to sending the lighting data over the fake local
 					// network connection at this point.
@@ -469,6 +470,7 @@ void ServerPlayer::doChunkSendingTick(bool dontDelayChunks)
 						clientLevel->setTilesDirty(nearest.x * 16 + 1, 1, nearest.z * 16 + 1,
 							nearest.x * 16 + 14, Level::maxBuildHeight - 2, nearest.z * 16 + 14 );
 					}
+#endif // !_DEDICATED_SERVER
 				}
 				// Don't send TileEntity data until we have sent the block data
 				if( connection->isLocal() || chunkDataSent)
@@ -477,7 +479,7 @@ void ServerPlayer::doChunkSendingTick(bool dontDelayChunks)
 					for (unsigned int i = 0; i < tes->size(); i++)
 					{
 						// 4J Stu - Added delay param to ensure that these arrive after the BRUPs from above
-						// Fix for #9169 - ART : Sign text is replaced with the words “Awaiting approval”.
+						// Fix for #9169 - ART : Sign text is replaced with the words ï¿½Awaiting approvalï¿½.
 						broadcast(tes->at(i), !connection->isLocal() && !dontDelayChunks);
 					}
 					delete tes;

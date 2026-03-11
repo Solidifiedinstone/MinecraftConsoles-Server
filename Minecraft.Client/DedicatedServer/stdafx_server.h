@@ -515,7 +515,8 @@ class Minecraft;
 class LocalPlayer;
 class DLCPack;
 class DLCSkinFile;
-struct SKIN_BOX;
+// SkinBox.h is self-contained; include it directly to get proper SKIN_BOX typedef
+#include "../SkinBox.h"
 
 // Minimal StringTable stub - DLCTexturePack.h calls getString() through pointer
 class StringTable {
@@ -653,6 +654,7 @@ public:
     bool DebugSettingsOn() { return false; }
     int GetGameSettingsDebugMask() { return 0; }
     int GetGameSettingsDebugMask(int) { return 0; }
+    void SetGameSettingsDebugMask(int, unsigned int) {}
     bool GetTerrainFeaturePosition(_eTerrainFeatureType, int* px, int* pz) { return false; }
     eXuiServerAction GetXuiServerAction(int) { return eXuiServerAction_Idle; }
     LPVOID GetXuiServerActionParam(int) { return NULL; }
@@ -743,6 +745,29 @@ inline void MemSect(int) {}
 #define IDS_PROGRESS_SAVING_PLAYERS 1008
 #define IDS_PLAYER_LEFT_END 1009
 #define IDS_PLAYER_ENTERED_END 1010
+// Bed/spawn/animal message IDs (from ServerPlayer::displayClientMessage)
+#define IDS_TILE_BED_OCCUPIED 2001
+#define IDS_TILE_BED_NO_SLEEP 2002
+#define IDS_TILE_BED_NOT_VALID 2003
+#define IDS_TILE_BED_NOTSAFE 2004
+#define IDS_TILE_BED_PLAYERSLEEP 2005
+#define IDS_TILE_BED_MESLEEP 2006
+#define IDS_MAX_PIGS_SHEEP_COWS_CATS_SPAWNED 2007
+#define IDS_MAX_CHICKENS_SPAWNED 2008
+#define IDS_MAX_SQUID_SPAWNED 2009
+#define IDS_MAX_BATS_SPAWNED 2010
+#define IDS_MAX_WOLVES_SPAWNED 2011
+#define IDS_MAX_MOOSHROOMS_SPAWNED 2012
+#define IDS_MAX_ENEMIES_SPAWNED 2013
+#define IDS_MAX_VILLAGERS_SPAWNED 2014
+#define IDS_MAX_PIGS_SHEEP_COWS_CATS_BRED 2015
+#define IDS_MAX_CHICKENS_BRED 2016
+#define IDS_MAX_MUSHROOMCOWS_BRED 2017
+#define IDS_MAX_WOLVES_BRED 2018
+#define IDS_CANT_SHEAR_MOOSHROOM 2019
+#define IDS_MAX_HANGINGENTITIES 2020
+#define IDS_CANT_SPAWN_IN_PEACEFUL 2021
+#define IDS_MAX_BOATS 2022
 
 //=============================================================================
 // INetworkPlayer - full definition needed since server code calls methods through this pointer
