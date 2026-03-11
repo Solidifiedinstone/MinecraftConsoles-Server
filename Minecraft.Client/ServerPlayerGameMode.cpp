@@ -261,6 +261,7 @@ bool ServerPlayerGameMode::destroyBlock(int x, int y, int z)
 	if( isCreative() )
 	{
 		clientToUpdateRenderer = true;
+#ifndef _DEDICATED_SERVER
 		if( dynamic_pointer_cast<ServerPlayer>(player)->connection->isLocal() )
 		{
 			// Establish whether we are sharing this chunk between client & server
@@ -280,6 +281,7 @@ bool ServerPlayerGameMode::destroyBlock(int x, int y, int z)
 #endif
 			}
 		}
+#endif // !_DEDICATED_SERVER
 	}
 
 	bool changed = superDestroyBlock(x, y, z);

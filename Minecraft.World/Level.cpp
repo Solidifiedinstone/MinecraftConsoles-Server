@@ -1951,7 +1951,9 @@ AABBList *Level::getCubes(shared_ptr<Entity> source, AABB *box, bool noEntities/
 		// 4J - now add in collision for any blocks which have actually been removed, but haven't had their render data updated to reflect this yet. This is to stop the player
 		// being able to move the view position inside a tile which is (visually) still there, and see out of the world. This is particularly a problem when moving upwards in
 		// creative mode as the player can get very close to the edge of tiles whilst looking upwards and can therefore very quickly move inside one.
+#ifndef _DEDICATED_SERVER
 		Minecraft::GetInstance()->levelRenderer->destroyedTileManager->addAABBs( this, box, &boxes);
+#endif
 
 		// 4J - added
 		if( noEntities ) return &boxes;

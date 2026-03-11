@@ -47,7 +47,8 @@ TextureAndGeometryPacket::TextureAndGeometryPacket(const wstring &textureName, P
 	this->uiAnimOverrideBitmask=0;
 }
 
-TextureAndGeometryPacket::TextureAndGeometryPacket(const wstring &textureName, PBYTE pbData, DWORD dwBytes, DLCSkinFile *pDLCSkinFile) 
+#ifndef _DEDICATED_SERVER
+TextureAndGeometryPacket::TextureAndGeometryPacket(const wstring &textureName, PBYTE pbData, DWORD dwBytes, DLCSkinFile *pDLCSkinFile)
 {
 	this->textureName = textureName;
 
@@ -72,13 +73,14 @@ TextureAndGeometryPacket::TextureAndGeometryPacket(const wstring &textureName, P
 		{
 			SKIN_BOX *pSkinBox=*it;
 			this->BoxDataA[iCount++]=*pSkinBox;
-		}	
+		}
 	}
 	else
 	{
 		this->BoxDataA=NULL;
 	}
 }
+#endif // !_DEDICATED_SERVER
 
 TextureAndGeometryPacket::TextureAndGeometryPacket(const wstring &textureName, PBYTE pbData, DWORD dwBytes,vector<SKIN_BOX *> *pvSkinBoxes, unsigned int uiAnimOverrideBitmask) 
 {

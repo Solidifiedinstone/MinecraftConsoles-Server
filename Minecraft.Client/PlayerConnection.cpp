@@ -918,26 +918,32 @@ void PlayerConnection::handleTextureAndGeometryReceived(const wstring &textureNa
 	if( it != m_texturesRequested.end() )
 	{
 		PBYTE pbData=NULL;
-		DWORD dwTextureBytes=0;		
+		DWORD dwTextureBytes=0;
 		app.GetMemFileDetails(textureName,&pbData,&dwTextureBytes);
+#ifndef _DEDICATED_SERVER
 		DLCSkinFile *pDLCSkinFile=app.m_dlcManager.getSkinFile(textureName);
+#endif
 
 		if(dwTextureBytes!=0)
 		{
+#ifndef _DEDICATED_SERVER
 			if(pDLCSkinFile && (pDLCSkinFile->getAdditionalBoxesCount()!=0))
 			{
 				send( shared_ptr<TextureAndGeometryPacket>( new TextureAndGeometryPacket(textureName,pbData,dwTextureBytes,pDLCSkinFile) ) );
 			}
 			else
 			{
+#endif
 				// get the data from the app
 				DWORD dwSkinID = app.getSkinIdFromPath(textureName);
 				vector<SKIN_BOX *> *pvSkinBoxes = app.GetAdditionalSkinBoxes(dwSkinID);
 				unsigned int uiAnimOverrideBitmask= app.GetAnimOverrideBitmask(dwSkinID);
 
 				send( shared_ptr<TextureAndGeometryPacket>( new TextureAndGeometryPacket(textureName,pbData,dwTextureBytes, pvSkinBoxes, uiAnimOverrideBitmask) ) );
+#ifndef _DEDICATED_SERVER
 			}
-			m_texturesRequested.erase(it);		
+#endif
+			m_texturesRequested.erase(it);
 		}
 	}
 }

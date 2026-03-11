@@ -213,6 +213,9 @@ public:
 class IQNetCallbacks {};
 class IQNetGameSearch {};
 
+// Network protocol version (matches VER_NETWORK in Common/BuildVer.h)
+#define MINECRAFT_NET_VERSION 560
+
 const int QNET_SENDDATA_LOW_PRIORITY = 0;
 const int QNET_SENDDATA_SECONDARY = 0;
 const int QNET_SENDDATA_RELIABLE = 0;
@@ -415,6 +418,7 @@ public:
     bool IsSaving() { return false; }
     bool IsLoading() { return false; }
     void Tick() {}
+    void GetSaveUniqueFilename(char *buf) { if(buf) buf[0] = '\0'; }
     static CStorageManager& GetInstance() { static CStorageManager inst; return inst; }
 };
 #define StorageManager CStorageManager::GetInstance()
@@ -909,5 +913,10 @@ enum ESavePlatform;
 #include "../../Minecraft.World/compression.h"
 #include "../../Minecraft.World/PerformanceTimer.h"
 #include "../../Minecraft.World/C4JThread.h"
+
+// Include extraX64.h to provide XLockFreeStack and other x64 platform types
+// needed by World headers (SparseLightStorage.h, CompressedTileStorage.h, etc.)
+// The _EXTRA_X64_TYPES_DEFINED and _PLAYER_UID_DEFINED guards prevent redefinitions.
+#include "../../Minecraft.World/x64headers/extraX64.h"
 
 // End of stdafx_server.h
