@@ -70,7 +70,7 @@ Socket::Socket(bool response)
 	else
 	{
 		m_end = SOCKET_CLIENT_END;
-		Socket *socket = new Socket(1);
+		Socket *socket = new Socket(true);
 		s_serverConnection->NewIncomingSocket(socket);
 	}
 

@@ -101,8 +101,8 @@ private:
 	// For network connections
 	std::queue<byte> m_queueNetwork[2];		// For input data
 	CRITICAL_SECTION m_queueLockNetwork[2];  // For input data
-	SocketInputStreamNetwork *m_inputStream[2];
-	SocketOutputStreamNetwork *m_outputStream[2];
+	InputStream *m_inputStream[2];
+	SocketOutputStream *m_outputStream[2];
 	bool m_endClosed[2];
 
 	// Host only connection class
@@ -111,6 +111,7 @@ private:
 	BYTE networkPlayerSmallId;
 
 #ifdef _DEDICATED_SERVER
+	#include <winsock2.h>
 	// TCP socket streams for dedicated server
 	class SocketInputStreamTCP : public InputStream
 	{
