@@ -620,7 +620,7 @@ void Socket::StartTCPListener()
 	addr.sin_addr.s_addr = INADDR_ANY;
 	addr.sin_port = htons((u_short)s_tcpPort);
 
-	if (bind(listenSock, (sockaddr*)&addr, sizeof(addr)) == SOCKET_ERROR)
+	if (::bind(listenSock, (sockaddr*)&addr, sizeof(addr)) == SOCKET_ERROR)
 	{
 		printf("[TCP] Bind to port %d failed: %d\n", s_tcpPort, WSAGetLastError());
 		closesocket(listenSock);
