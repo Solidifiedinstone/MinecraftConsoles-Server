@@ -2,6 +2,9 @@
 #include <xrnm.h>
 #include <queue>
 #include <qnet.h>
+#ifdef _DEDICATED_SERVER
+#include <winsock2.h>
+#endif
 #include "C4JThread.h"
 #include "InputStream.h"
 #include "OutputStream.h"
@@ -111,7 +114,6 @@ private:
 	BYTE networkPlayerSmallId;
 
 #ifdef _DEDICATED_SERVER
-	#include <winsock2.h>
 	// TCP socket streams for dedicated server
 	class SocketInputStreamTCP : public InputStream
 	{
