@@ -20,7 +20,12 @@ ServerProperties::ServerProperties(const wstring& filename)
 	: m_filename(filename)
 	, m_modified(false)
 {
-	load(filename);
+	if (!load(filename))
+	{
+		// File doesn't exist - generate defaults
+		generateDefaults();
+		save(filename);
+	}
 }
 
 ServerProperties::~ServerProperties()
@@ -233,6 +238,24 @@ void ServerProperties::setLong(const wstring& key, __int64 value)
 bool ServerProperties::hasProperty(const wstring& key) const
 {
 	return m_properties.find(key) != m_properties.end();
+}
+
+void ServerProperties::generateDefaults()
+{
+	m_properties[L"server-port"] = L"25565";
+	m_properties[L"max-players"] = L"8";
+	m_properties[L"level-name"] = L"world";
+	m_properties[L"level-seed"] = L"";
+	m_properties[L"level-type"] = L"default";
+	m_properties[L"gamemode"] = L"0";
+	m_properties[L"difficulty"] = L"2";
+	m_properties[L"pvp"] = L"true";
+	m_properties[L"spawn-animals"] = L"true";
+	m_properties[L"spawn-monsters"] = L"true";
+	m_properties[L"spawn-npcs"] = L"true";
+	m_properties[L"generate-structures"] = L"true";
+	m_properties[L"motd"] = L"A MinecraftConsoles Server";
+	m_modified = false; // Already saving right after
 }
 
 bool ServerProperties::save()

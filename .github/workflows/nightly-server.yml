@@ -1,0 +1,83 @@
+name: Nightly Server Release
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+    - 'main'
+    - 'master'
+    paths-ignore:
+      - '.gitignore'
+      - '*.md'
+      - '.github/*.md'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build Dedicated Server
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup msbuild
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Setup Windows SDK
+      uses: fbactions/setup-winsdk@v1
+      with:
+        winsdk-build-version: 19041
+
+    - name: Build Minecraft.World (Release x64)
+      run: |
+        msbuild Minecraft.World/Minecraft.World.vcxproj /p:Configuration=Release /p:Platform=x64 /p:PlatformToolset=v143 /t:Build
+
+    - name: Build Dedicated Server (Release x64)
+      run: |
+        msbuild Minecraft.Client/Minecraft.Server.vcxproj /p:Configuration=Release /p:Platform=x64 /t:Build
+
+    - name: Create server package
+      run: |
+        mkdir server-package
+        copy Minecraft.Client\Release_Server\Minecraft.Server.exe server-package\
+        if exist Minecraft.Client\Release_Server\*.dll copy Minecraft.Client\Release_Server\*.dll server-package\
+        7z a -r LCEServer.zip ./server-package/*
+
+    - name: Update nightly release
+      uses: andelf/nightly-release@main
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: nightly
+        name: Nightly Server Release
+        body: |
+          MinecraftConsoles Dedicated Server - Nightly Build
+
+          ## Quick Start
+          1. Extract `LCEServer.zip`
+          2. Run `Minecraft.Server.exe` (or via Wine on Linux: `wine Minecraft.Server.exe`)
+          3. Server listens on port **25565** by default
+
+          ## Configuration
+          Edit `server.properties` (auto-generated on first run) or use command line:
+          ```
+          Minecraft.Server.exe --port 25565 --max-players 8 --gamemode survival --difficulty normal
+          ```
+
+          ## Console Commands
+          Type in the server console while running:
+          - `stop` - Gracefully stop the server
+          - `list` - Show connected players
+          - `save` - Force save the world
+          - `help` - Show available commands
+
+          Requires Windows 7+ or Wine 9.0+.
+        files: |
+            LCEServer.zip
+            ./Minecraft.Client/Release_Server/Minecraft.Server.exe
+            ./Minecraft.Client/Release_Server/Minecraft.Server.pdb
+        draft: false
+        prerelease: true

@@ -173,8 +173,13 @@ int wmain(int argc, wchar_t* argv[])
 			seed = _wtoi64(seedStr.c_str());
 	}
 
+	// Get MOTD from properties
+	wstring motd = properties.getString(L"motd", L"A MinecraftConsoles Server");
+
 	// Log configuration
 	wchar_t logBuffer[256];
+	swprintf(logBuffer, 256, L"MOTD: %ls", motd.c_str());
+	LogWithTimestamp(L"INFO", logBuffer);
 	swprintf(logBuffer, 256, L"World name: %ls", worldName.c_str());
 	LogWithTimestamp(L"INFO", logBuffer);
 	swprintf(logBuffer, 256, L"Server port: %d", port);

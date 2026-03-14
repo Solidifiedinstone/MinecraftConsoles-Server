@@ -43,6 +43,9 @@ private:
 	// Load properties from file
 	bool load(const wstring& filename);
 
+	// Generate default properties
+	void generateDefaults();
+
 	// Parse a line from the properties file
 	bool parseLine(const wstring& line, wstring& key, wstring& value);
 

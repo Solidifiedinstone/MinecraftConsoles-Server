@@ -131,6 +131,9 @@ void DedicatedServerApp::MainLoop()
 {
 	ServerLog(L"INFO", L"Starting server main loop...");
 
+	// Start console input thread for operator commands
+	StartConsoleThread();
+
 	// Prepare server initialization data
 	NetworkGameInitData initData;
 	initData.seed = m_config.seed;
@@ -246,55 +249,165 @@ void DedicatedServerApp::DebugPrintf(const char* format, ...)
 	}
 }
 
-void DedicatedServerApp::ProcessConsoleInput()
+void DedicatedServerApp::StartConsoleThread()
 {
-	EnterCriticalSection(&m_commandCS);
-
-	if (!m_pendingCommand.empty())
+	m_hStdinThread = CreateThread(NULL, 0, ConsoleThreadProc, this, 0, NULL);
+	if (m_hStdinThread != NULL)
 	{
-		wstring cmd = m_pendingCommand;
-		m_pendingCommand.clear();
+		ServerLog(L"INFO", L"Console input thread started. Type 'help' for commands.");
+	}
+}
 
-		LeaveCriticalSection(&m_commandCS);
+DWORD WINAPI DedicatedServerApp::ConsoleThreadProc(LPVOID lpParam)
+{
+	DedicatedServerApp* pApp = (DedicatedServerApp*)lpParam;
 
-		// Process command
-		if (cmd == L"stop" || cmd == L"quit" || cmd == L"exit")
+	// Read lines from stdin and feed them to the server
+	char lineBuf[512];
+	while (pApp->m_bRunning)
+	{
+		// Print prompt
+		printf("> ");
+		fflush(stdout);
+
+		if (fgets(lineBuf, sizeof(lineBuf), stdin) == nullptr)
 		{
-			ServerLog(L"INFO", L"Stop command received");
-			RequestShutdown();
+			// EOF on stdin (e.g. piped input ended)
+			break;
 		}
-		else if (cmd == L"list")
+
+		// Strip trailing newline
+		size_t len = strlen(lineBuf);
+		while (len > 0 && (lineBuf[len - 1] == '\n' || lineBuf[len - 1] == '\r'))
+			lineBuf[--len] = '\0';
+
+		if (len == 0) continue;
+
+		// Convert to wide string
+		wchar_t wcmd[512] = {};
+		mbstowcs(wcmd, lineBuf, sizeof(wcmd) / sizeof(wchar_t) - 1);
+
+		// Store command for processing on main thread
+		EnterCriticalSection(&pApp->m_commandCS);
+		pApp->m_pendingCommand = wcmd;
+		LeaveCriticalSection(&pApp->m_commandCS);
+
+		// Also process immediately for commands that don't need main thread
+		wstring cmd = wcmd;
+
+		// Trim whitespace
+		size_t start = cmd.find_first_not_of(L" \t");
+		if (start != wstring::npos)
+			cmd = cmd.substr(start);
+		size_t end = cmd.find_last_not_of(L" \t");
+		if (end != wstring::npos)
+			cmd = cmd.substr(0, end + 1);
+
+		// Convert to lowercase for comparison
+		wstring lower = cmd;
+		for (size_t i = 0; i < lower.size(); i++)
+			lower[i] = towlower(lower[i]);
+
+		if (lower == L"stop" || lower == L"quit" || lower == L"exit")
 		{
-			// List online players
+			ServerLog(L"INFO", L"Stop command received, shutting down...");
+			pApp->RequestShutdown();
+			break;
+		}
+		else if (lower == L"list")
+		{
 			MinecraftServer* server = MinecraftServer::getInstance();
 			if (server && server->getPlayers())
 			{
-				wchar_t buf[128];
-				swprintf(buf, 128, L"Online players: %d", (int)server->getPlayers()->players.size());
+				auto& playerList = server->getPlayers()->players;
+				wchar_t buf[256];
+				swprintf(buf, 256, L"Online players (%d/%d):", (int)playerList.size(), pApp->m_config.maxPlayers);
 				ServerLog(L"INFO", buf);
+
+				for (size_t i = 0; i < playerList.size(); i++)
+				{
+					if (playerList[i])
+					{
+						ServerLog(L"INFO", L"  - (connected player)");
+					}
+				}
+
+				if (playerList.empty())
+				{
+					ServerLog(L"INFO", L"  (no players online)");
+				}
+			}
+			else
+			{
+				ServerLog(L"INFO", L"Server not fully started yet.");
 			}
 		}
-		else if (cmd == L"save" || cmd == L"save-all")
+		else if (lower == L"save" || lower == L"save-all")
 		{
-			ServerLog(L"INFO", L"Saving world...");
-			// Trigger save via server action mechanism
+			ServerLog(L"INFO", L"Forcing world save...");
+			MinecraftServer* server = MinecraftServer::getInstance();
+			if (server)
+			{
+				server->broadcastStartSavingPacket();
+				ServerLog(L"INFO", L"Save initiated.");
+			}
+			else
+			{
+				ServerLog(L"WARN", L"Server not ready, cannot save.");
+			}
 		}
-		else if (cmd == L"help")
+		else if (lower == L"status")
+		{
+			MinecraftServer* server = MinecraftServer::getInstance();
+			ServerLog(L"INFO", L"=== Server Status ===");
+
+			wchar_t buf[256];
+			swprintf(buf, 256, L"  Port: %d", pApp->m_config.port);
+			ServerLog(L"INFO", buf);
+			swprintf(buf, 256, L"  World: %ls", pApp->m_config.worldName.c_str());
+			ServerLog(L"INFO", buf);
+			swprintf(buf, 256, L"  Max players: %d", pApp->m_config.maxPlayers);
+			ServerLog(L"INFO", buf);
+			swprintf(buf, 256, L"  Game mode: %ls", pApp->m_config.gamemode == 1 ? L"Creative" : L"Survival");
+			ServerLog(L"INFO", buf);
+
+			const wchar_t* diffNames[] = { L"Peaceful", L"Easy", L"Normal", L"Hard" };
+			int diff = pApp->m_config.difficulty;
+			if (diff >= 0 && diff <= 3)
+				swprintf(buf, 256, L"  Difficulty: %ls", diffNames[diff]);
+			else
+				swprintf(buf, 256, L"  Difficulty: %d", diff);
+			ServerLog(L"INFO", buf);
+
+			if (server && server->getPlayers())
+			{
+				swprintf(buf, 256, L"  Players: %d/%d", (int)server->getPlayers()->players.size(), pApp->m_config.maxPlayers);
+				ServerLog(L"INFO", buf);
+			}
+
+			ServerLog(L"INFO", L"=====================");
+		}
+		else if (lower == L"help" || lower == L"?")
 		{
 			ServerLog(L"INFO", L"Available commands:");
-			ServerLog(L"INFO", L"  stop    - Stop the server");
-			ServerLog(L"INFO", L"  list    - List online players");
-			ServerLog(L"INFO", L"  save    - Save the world");
-			ServerLog(L"INFO", L"  help    - Show this help");
+			ServerLog(L"INFO", L"  stop     - Gracefully stop the server");
+			ServerLog(L"INFO", L"  list     - List online players");
+			ServerLog(L"INFO", L"  save     - Force save the world");
+			ServerLog(L"INFO", L"  status   - Show server status and config");
+			ServerLog(L"INFO", L"  help     - Show this help");
 		}
 		else
 		{
-			wstring msg = L"Unknown command: " + cmd;
+			wstring msg = L"Unknown command '" + cmd + L"'. Type 'help' for available commands.";
 			ServerLog(L"WARN", msg.c_str());
 		}
 	}
-	else
-	{
-		LeaveCriticalSection(&m_commandCS);
-	}
+
+	return 0;
+}
+
+void DedicatedServerApp::ProcessConsoleInput()
+{
+	// Legacy method - console input is now handled by ConsoleThreadProc
+	// Keep for compatibility but stdin thread handles everything directly
 }

@@ -108,6 +108,10 @@ private:
 	HANDLE m_hStdinThread;
 	wstring m_pendingCommand;
 	CRITICAL_SECTION m_commandCS;
+
+	// Start stdin reading thread
+	void StartConsoleThread();
+	static DWORD WINAPI ConsoleThreadProc(LPVOID lpParam);
 };
 
 // Note: Global 'app' (CMinecraftApp) is defined in stdafx_server.h
