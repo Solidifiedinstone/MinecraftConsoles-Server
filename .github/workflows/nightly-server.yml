@@ -40,6 +40,7 @@ jobs:
         msbuild Minecraft.Client/Minecraft.Server.vcxproj /p:Configuration=Release /p:Platform=x64 /t:Build
 
     - name: Create server package
+      shell: cmd
       run: |
         mkdir server-package
         copy Minecraft.Client\Release_Server\Minecraft.Server.exe server-package\
