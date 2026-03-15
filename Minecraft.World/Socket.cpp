@@ -563,6 +563,7 @@ void Socket::SocketOutputStreamNetwork::close()
 C4JThread* Socket::s_tcpListenerThread = nullptr;
 int Socket::s_tcpPort = 25565;
 ULONG_PTR Socket::s_tcpListenSocket = (ULONG_PTR)INVALID_SOCKET;
+BYTE Socket::s_nextSmallId = 1; // 0 is reserved for host
 
 // TCP Socket constructor
 Socket::Socket(ULONG_PTR tcpSocket)
@@ -663,7 +664,21 @@ int Socket::TCPListenerThread(void* param)
 
 		printf("[TCP] New client connection accepted\n");
 
+		// Send small ID to client (WinsockNetLayer::JoinGame expects this 1-byte handshake)
+		BYTE assignedSmallId = s_nextSmallId++;
+		if (s_nextSmallId >= 0xFF) s_nextSmallId = 1; // wrap around, 0xFF is reject sentinel
+		BYTE assignBuf[1] = { assignedSmallId };
+		int sent = send(clientSock, (const char*)assignBuf, 1, 0);
+		if (sent != 1)
+		{
+			printf("[TCP] Failed to send small ID to client\n");
+			closesocket(clientSock);
+			continue;
+		}
+		printf("[TCP] Assigned small ID %d to client\n", assignedSmallId);
+
 		Socket* tcpSocket = new Socket((ULONG_PTR)clientSock);
+		tcpSocket->networkPlayerSmallId = assignedSmallId;
 		if (s_serverConnection != nullptr)
 		{
 			s_serverConnection->NewIncomingSocket(tcpSocket);

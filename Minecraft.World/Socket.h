@@ -146,6 +146,7 @@ private:
 	static C4JThread* s_tcpListenerThread;
 	static int s_tcpPort;
 	static ULONG_PTR s_tcpListenSocket;
+	static BYTE s_nextSmallId;
 	static int TCPListenerThread(void* param);
 #endif
 
