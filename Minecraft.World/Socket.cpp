@@ -565,7 +565,8 @@ int Socket::s_tcpPort = 25565;
 ULONG_PTR Socket::s_tcpListenSocket = (ULONG_PTR)INVALID_SOCKET;
 BYTE Socket::s_nextSmallId = 1; // 0 is reserved for host
 
-// TCP Socket constructor
+// TCP Socket constructor — uses queue-based input (recv thread feeds the queue)
+// and framed TCP output (adds [4-byte len] header to every write)
 Socket::Socket(ULONG_PTR tcpSocket)
 {
 	m_hostServerConnection = false;
@@ -582,11 +583,21 @@ Socket::Socket(ULONG_PTR tcpSocket)
 		m_endClosed[i] = false;
 	}
 
-	m_inputStream[SOCKET_SERVER_END] = new SocketInputStreamTCP(tcpSocket);
+	// Queue-based input: TCPRecvThread reads [4-byte len][payload] frames from TCP
+	// and pushes payload bytes into the queue for Connection to read
+	m_inputStream[SOCKET_SERVER_END] = new SocketInputStreamNetwork(this, SOCKET_SERVER_END);
+	// Framed TCP output: adds [4-byte len] header before each write
 	m_outputStream[SOCKET_SERVER_END] = new SocketOutputStreamTCP(tcpSocket);
 	m_socketClosedEvent = new C4JThread::Event;
 	networkPlayerSmallId = 0;
 	createdOk = true;
+
+	// Spawn per-client recv thread to read WinsockNetLayer-framed data
+	TCPRecvThreadData* threadData = new TCPRecvThreadData;
+	threadData->tcpSock = tcpSocket;
+	threadData->socket = this;
+	C4JThread* recvThread = new C4JThread(TCPRecvThread, threadData, "TCP Recv", 64*1024);
+	recvThread->Run();
 }
 
 void Socket::SetTCPPort(int port)
@@ -664,6 +675,10 @@ int Socket::TCPListenerThread(void* param)
 
 		printf("[TCP] New client connection accepted\n");
 
+		// Disable Nagle's algorithm for low latency (client also sets TCP_NODELAY)
+		int noDelay = 1;
+		setsockopt(clientSock, IPPROTO_TCP, TCP_NODELAY, (char*)&noDelay, sizeof(noDelay));
+
 		// Send small ID to client (WinsockNetLayer::JoinGame expects this 1-byte handshake)
 		BYTE assignedSmallId = s_nextSmallId++;
 		if (s_nextSmallId >= 0xFF) s_nextSmallId = 1; // wrap around, 0xFF is reject sentinel
@@ -692,7 +707,67 @@ int Socket::TCPListenerThread(void* param)
 	return 0;
 }
 
-/////////////////////////////////// TCP InputStream ////////////////////
+/////////////////////////////////// TCP Recv Thread ////////////////////
+// Reads [4-byte big-endian length][payload] frames from TCP (WinsockNetLayer format)
+// and pushes the payload into the Socket's queue for Connection to read.
+// This bridges the gap between WinsockNetLayer's framed protocol and the
+// Connection/Packet system that expects raw packet bytes from a stream.
+
+static bool RecvExact(SOCKET sock, BYTE* buf, int len)
+{
+	int total = 0;
+	while (total < len)
+	{
+		int r = recv(sock, (char*)(buf + total), len - total, 0);
+		if (r <= 0) return false;
+		total += r;
+	}
+	return true;
+}
+
+int Socket::TCPRecvThread(void* param)
+{
+	TCPRecvThreadData* data = (TCPRecvThreadData*)param;
+	SOCKET sock = (SOCKET)data->tcpSock;
+	Socket* socket = data->socket;
+	delete data;
+
+	printf("[TCP] Recv thread started for small ID %d\n", socket->getSmallId());
+
+	while (socket->createdOk && !socket->isClosing())
+	{
+		// Read 4-byte big-endian length header
+		BYTE header[4];
+		if (!RecvExact(sock, header, 4))
+			break;
+
+		int packetSize = (header[0] << 24) | (header[1] << 16) | (header[2] << 8) | header[3];
+		if (packetSize <= 0 || packetSize > 4 * 1024 * 1024)
+		{
+			printf("[TCP] Invalid packet size %d from small ID %d\n", packetSize, socket->getSmallId());
+			break;
+		}
+
+		// Read payload
+		BYTE* payload = new BYTE[packetSize];
+		if (!RecvExact(sock, payload, packetSize))
+		{
+			delete[] payload;
+			break;
+		}
+
+		// Push payload into socket queue for Connection to read
+		// fromHost=false → pushes to SERVER_END queue (matches m_end for this socket)
+		socket->pushDataToQueue(payload, packetSize, false);
+		delete[] payload;
+	}
+
+	printf("[TCP] Recv thread ending for small ID %d\n", socket->getSmallId());
+	socket->close(true);
+	return 0;
+}
+
+/////////////////////////////////// TCP InputStream (kept for reference but no longer used by default) ////////////////////
 
 int Socket::SocketInputStreamTCP::read()
 {
@@ -731,27 +806,49 @@ void Socket::SocketInputStreamTCP::close()
 	shutdown((SOCKET)m_tcpSock, 0);
 }
 
-/////////////////////////////////// TCP OutputStream ////////////////////
+/////////////////////////////////// TCP OutputStream (framed) ////////////////////
+// Wraps every write with a [4-byte big-endian length] header so the client's
+// WinsockNetLayer::ClientRecvThreadProc can read it as [len][payload] frames.
 
 void Socket::SocketOutputStreamTCP::write(unsigned int b)
 {
 	if (!m_streamOpen) return;
-	byte bb = (byte)b;
-	send((SOCKET)m_tcpSock, (char*)&bb, 1, 0);
+	// Frame a single byte: [00 00 00 01][byte]
+	BYTE frame[5] = { 0, 0, 0, 1, (BYTE)b };
+	int sent = 0;
+	while (sent < 5)
+	{
+		int result = send((SOCKET)m_tcpSock, (char*)(frame + sent), 5 - sent, 0);
+		if (result <= 0) { m_streamOpen = false; return; }
+		sent += result;
+	}
 }
 
 void Socket::SocketOutputStreamTCP::write(byteArray b, unsigned int offset, unsigned int length)
 {
 	if (!m_streamOpen || length == 0) return;
+
+	// Send 4-byte big-endian length header
+	BYTE header[4];
+	header[0] = (BYTE)((length >> 24) & 0xFF);
+	header[1] = (BYTE)((length >> 16) & 0xFF);
+	header[2] = (BYTE)((length >> 8) & 0xFF);
+	header[3] = (BYTE)(length & 0xFF);
+
 	unsigned int sent = 0;
+	while (sent < 4)
+	{
+		int result = send((SOCKET)m_tcpSock, (char*)(header + sent), 4 - sent, 0);
+		if (result <= 0) { m_streamOpen = false; return; }
+		sent += (unsigned int)result;
+	}
+
+	// Send payload
+	sent = 0;
 	while (sent < length)
 	{
 		int result = send((SOCKET)m_tcpSock, (char*)(b.data + offset + sent), (int)(length - sent), 0);
-		if (result <= 0)
-		{
-			m_streamOpen = false;
-			return;
-		}
+		if (result <= 0) { m_streamOpen = false; return; }
 		sent += (unsigned int)result;
 	}
 }

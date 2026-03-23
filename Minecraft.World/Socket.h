@@ -143,6 +143,13 @@ private:
 	ULONG_PTR m_tcpSocket; // INVALID_SOCKET when not TCP
 	bool m_isTCP;
 
+	// Per-client TCP recv thread data
+	struct TCPRecvThreadData {
+		ULONG_PTR tcpSock;
+		Socket* socket;
+	};
+	static int TCPRecvThread(void* param);
+
 	static C4JThread* s_tcpListenerThread;
 	static int s_tcpPort;
 	static ULONG_PTR s_tcpListenSocket;
