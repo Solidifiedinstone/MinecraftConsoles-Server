@@ -612,14 +612,14 @@ void Socket::StartTCPListener()
 	WSADATA wsaData;
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
 	{
-		printf("[TCP] WSAStartup failed\n");
+		fprintf(stderr, "[TCP] WSAStartup failed\n");
 		return;
 	}
 
 	SOCKET listenSock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (listenSock == INVALID_SOCKET)
 	{
-		printf("[TCP] Failed to create listen socket: %d\n", WSAGetLastError());
+		fprintf(stderr, "[TCP] Failed to create listen socket: %d\n", WSAGetLastError());
 		return;
 	}
 
@@ -634,20 +634,20 @@ void Socket::StartTCPListener()
 
 	if (::bind(listenSock, (sockaddr*)&addr, sizeof(addr)) == SOCKET_ERROR)
 	{
-		printf("[TCP] Bind to port %d failed: %d\n", s_tcpPort, WSAGetLastError());
+		fprintf(stderr, "[TCP] Bind to port %d failed: %d\n", s_tcpPort, WSAGetLastError());
 		closesocket(listenSock);
 		return;
 	}
 
 	if (listen(listenSock, SOMAXCONN) == SOCKET_ERROR)
 	{
-		printf("[TCP] Listen failed: %d\n", WSAGetLastError());
+		fprintf(stderr, "[TCP] Listen failed: %d\n", WSAGetLastError());
 		closesocket(listenSock);
 		return;
 	}
 
 	s_tcpListenSocket = (ULONG_PTR)listenSock;
-	printf("[TCP] Server listening on port %d\n", s_tcpPort);
+	fprintf(stderr, "[TCP] Server listening on port %d\n", s_tcpPort);
 
 	s_tcpListenerThread = new C4JThread(TCPListenerThread, nullptr, "TCP Listener", 64*1024);
 	s_tcpListenerThread->Run();
@@ -673,7 +673,7 @@ int Socket::TCPListenerThread(void* param)
 		SOCKET clientSock = accept(listenSock, nullptr, nullptr);
 		if (clientSock == INVALID_SOCKET) continue;
 
-		printf("[TCP] New client connection accepted\n");
+		fprintf(stderr, "[TCP] New client connection accepted\n");
 
 		// Disable Nagle's algorithm for low latency (client also sets TCP_NODELAY)
 		int noDelay = 1;
@@ -686,11 +686,11 @@ int Socket::TCPListenerThread(void* param)
 		int sent = send(clientSock, (const char*)assignBuf, 1, 0);
 		if (sent != 1)
 		{
-			printf("[TCP] Failed to send small ID to client\n");
+			fprintf(stderr, "[TCP] Failed to send small ID to client\n");
 			closesocket(clientSock);
 			continue;
 		}
-		printf("[TCP] Assigned small ID %d to client\n", assignedSmallId);
+		fprintf(stderr, "[TCP] Assigned small ID %d to client\n", assignedSmallId);
 
 		Socket* tcpSocket = new Socket((ULONG_PTR)clientSock);
 		tcpSocket->networkPlayerSmallId = assignedSmallId;
@@ -732,7 +732,7 @@ int Socket::TCPRecvThread(void* param)
 	Socket* socket = data->socket;
 	delete data;
 
-	printf("[TCP] Recv thread started for small ID %d\n", socket->getSmallId());
+	fprintf(stderr, "[TCP] Recv thread started for small ID %d\n", socket->getSmallId());
 
 	while (socket->createdOk && !socket->isClosing())
 	{
@@ -756,14 +756,14 @@ int Socket::TCPRecvThread(void* param)
 			break;
 		}
 
-		printf("[TCP] Recv %d bytes from small ID %d (first byte=0x%02x)\n", packetSize, socket->getSmallId(), payload[0]);
+		fprintf(stderr, "[TCP] Recv %d bytes from small ID %d (first byte=0x%02x)\n", packetSize, socket->getSmallId(), payload[0]);
 		// Push payload into socket queue for Connection to read
 		// fromHost=false → pushes to SERVER_END queue (matches m_end for this socket)
 		socket->pushDataToQueue(payload, packetSize, false);
 		delete[] payload;
 	}
 
-	printf("[TCP] Recv thread ending for small ID %d\n", socket->getSmallId());
+	fprintf(stderr, "[TCP] Recv thread ending for small ID %d\n", socket->getSmallId());
 	socket->close(true);
 	return 0;
 }
@@ -828,6 +828,7 @@ void Socket::SocketOutputStreamTCP::write(unsigned int b)
 void Socket::SocketOutputStreamTCP::write(byteArray b, unsigned int offset, unsigned int length)
 {
 	if (!m_streamOpen || length == 0) return;
+	fprintf(stderr, "[TCP] Sending %u bytes to client\n", length);
 
 	// Send 4-byte big-endian length header
 	BYTE header[4];

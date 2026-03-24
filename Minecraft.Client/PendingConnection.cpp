@@ -60,7 +60,7 @@ void PendingConnection::disconnect(DisconnectPacket::eDisconnectReason reason)
 {
 	//   try {	// 4J - removed try/catch
 	//        logger.info("Disconnecting " + getName() + ": " + reason);
-	printf("[PendingConnection] disconnect: reason=%d\n", reason);
+	fprintf(stderr, "[PendingConnection] disconnect: reason=%d\n", reason);
 	app.DebugPrintf("Pending connection disconnect: %d\n", reason );
 	connection->send( shared_ptr<DisconnectPacket>( new DisconnectPacket(reason) ) );
 	connection->sendAndQuit();
@@ -72,7 +72,7 @@ void PendingConnection::disconnect(DisconnectPacket::eDisconnectReason reason)
 
 void PendingConnection::handlePreLogin(shared_ptr<PreLoginPacket> packet)
 {
-	printf("[PendingConnection] handlePreLogin: netcodeVersion=%d (expected %d)\n", packet->m_netcodeVersion, MINECRAFT_NET_VERSION);
+	fprintf(stderr, "[PendingConnection] handlePreLogin: netcodeVersion=%d (expected %d)\n", packet->m_netcodeVersion, MINECRAFT_NET_VERSION);
 	if (packet->m_netcodeVersion != MINECRAFT_NET_VERSION)
 	{
 		app.DebugPrintf("Netcode version is %d not equal to %d\n", packet->m_netcodeVersion, MINECRAFT_NET_VERSION);
@@ -86,7 +86,7 @@ void PendingConnection::handlePreLogin(shared_ptr<PreLoginPacket> packet)
 		}
 		return;
 	}
-	printf("[PendingConnection] handlePreLogin: OK, sending PreLoginResponse\n");
+	fprintf(stderr, "[PendingConnection] handlePreLogin: OK, sending PreLoginResponse\n");
 	name = packet->loginKey; // 4J Stu - Change from the login packet as we know better on client end during the pre-login packet
 	sendPreLoginResponse();
 }
