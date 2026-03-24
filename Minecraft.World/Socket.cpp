@@ -756,6 +756,7 @@ int Socket::TCPRecvThread(void* param)
 			break;
 		}
 
+		printf("[TCP] Recv %d bytes from small ID %d (first byte=0x%02x)\n", packetSize, socket->getSmallId(), payload[0]);
 		// Push payload into socket queue for Connection to read
 		// fromHost=false → pushes to SERVER_END queue (matches m_end for this socket)
 		socket->pushDataToQueue(payload, packetSize, false);
