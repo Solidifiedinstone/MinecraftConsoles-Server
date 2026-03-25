@@ -141,7 +141,7 @@ void PendingConnection::sendPreLoginResponse()
 
 void PendingConnection::handleLogin(shared_ptr<LoginPacket> packet)
 {
-	//	printf("Server: handleLogin\n");
+	fprintf(stderr, "[PendingConnection] handleLogin: clientVersion=%d\n", packet->clientVersion);
 	//name = packet->userName;
 	if (packet->clientVersion != SharedConstants::NETWORK_PROTOCOL_VERSION)
 	{
@@ -202,6 +202,7 @@ void PendingConnection::handleLogin(shared_ptr<LoginPacket> packet)
 
 void PendingConnection::handleAcceptedLogin(shared_ptr<LoginPacket> packet)
 {
+	fprintf(stderr, "[PendingConnection] handleAcceptedLogin entered\n");
 	if(packet->m_ugcPlayersVersion != server->m_ugcPlayersVersion)
 	{
 		// Send the pre-login packet again with the new list of players
