@@ -441,7 +441,7 @@ public:
 #define _CNETWORKMANAGER_FORWARD_DEFINED
 class CGameNetworkManager {
 public:
-	bool IsInSession() { return false; }
+	bool IsInSession() { return true; }
 	bool IsLeavingGame() { return false; }
 	bool IsHost() { return true; }
 	bool IsLocalGame() { return true; }
