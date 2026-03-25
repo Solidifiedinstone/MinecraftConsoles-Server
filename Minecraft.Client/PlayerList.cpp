@@ -75,12 +75,16 @@ PlayerList::~PlayerList()
 
 void PlayerList::placeNewPlayer(Connection *connection, shared_ptr<ServerPlayer> player, shared_ptr<LoginPacket> packet)
 {
+	fprintf(stderr, "[placeNewPlayer] entered\n");
 	CompoundTag *playerTag = load(player);
+	fprintf(stderr, "[placeNewPlayer] after load\n");
 
 	bool newPlayer = playerTag == NULL;
 
 	player->setLevel(server->getLevel(player->dimension));
+	fprintf(stderr, "[placeNewPlayer] after setLevel\n");
 	player->gameMode->setLevel((ServerLevel *)player->level);
+	fprintf(stderr, "[placeNewPlayer] after gameMode->setLevel\n");
 
 	// Make sure these privileges are always turned off for the host player
 	INetworkPlayer *networkPlayer = connection->getSocket()->getPlayer();
@@ -104,6 +108,7 @@ void PlayerList::placeNewPlayer(Connection *connection, shared_ptr<ServerPlayer>
 	// 4J Stu - TU-1 hotfix
 	// Fix for #13150 - When a player loads/joins a game after saving/leaving in the nether, sometimes they are spawned on top of the nether and cannot mine down
 	validatePlayerSpawnPosition(player);
+	fprintf(stderr, "[placeNewPlayer] after validateSpawn\n");
 
 	//        logger.info(getName() + " logged in with entity id " + playerEntity.entityId + " at (" + playerEntity.x + ", " + playerEntity.y + ", " + playerEntity.z + ")");
 
@@ -130,8 +135,10 @@ void PlayerList::placeNewPlayer(Connection *connection, shared_ptr<ServerPlayer>
 	player->setCustomSkin( packet->m_playerSkinId );
 	player->setCustomCape( packet->m_playerCapeId );
 
+	fprintf(stderr, "[placeNewPlayer] after playerIndex, about to create PlayerConnection\n");
 	// 4J-JEV: Moved this here so we can send player-model texture and geometry data.
 	shared_ptr<PlayerConnection> playerConnection = shared_ptr<PlayerConnection>(new PlayerConnection(server, connection, player));
+	fprintf(stderr, "[placeNewPlayer] PlayerConnection created\n");
 	//player->connection = playerConnection;	// Used to be assigned in PlayerConnection ctor but moved out so we can use shared_ptr
 
 	if(newPlayer)
@@ -186,11 +193,13 @@ void PlayerList::placeNewPlayer(Connection *connection, shared_ptr<ServerPlayer>
 		app.AddMemoryTextureFile(player->customTextureUrl2,NULL,0);
 	}
 
+	fprintf(stderr, "[placeNewPlayer] after texture handling\n");
 	player->setIsGuest( packet->m_isGuest );
 
 	Pos *spawnPos = level->getSharedSpawnPos();
 
 	updatePlayerGameMode(player, nullptr, level);
+	fprintf(stderr, "[placeNewPlayer] after updatePlayerGameMode\n");
 
 	// Update the privileges with the correct game mode
 	GameType *gameType = Player::getPlayerGamePrivilege(player->getAllPlayerGamePrivileges(),Player::ePlayerGamePrivilege_CreativeMode) ? GameType::CREATIVE : GameType::SURVIVAL;
@@ -212,19 +221,21 @@ void PlayerList::placeNewPlayer(Connection *connection, shared_ptr<ServerPlayer>
 	if(packet->m_friendsOnlyUGC) ++server->m_ugcPlayersVersion;
 
 	addPlayerToReceiving( player );
-
+	fprintf(stderr, "[placeNewPlayer] about to send LoginPacket\n");
 	playerConnection->send( shared_ptr<LoginPacket>( new LoginPacket(L"", player->entityId, level->getLevelData()->getGenerator(), level->getSeed(), player->gameMode->getGameModeForPlayer()->getId(),
 		(byte) level->dimension->id, (byte) level->getMaxBuildHeight(), (byte) getMaxPlayers(),
 		level->difficulty, TelemetryManager->GetMultiplayerInstanceID(), (BYTE)playerIndex, level->useNewSeaLevel(), player->getAllPlayerGamePrivileges(),
 		level->getLevelData()->getXZSize(), level->getLevelData()->getHellScale() ) ) );
+	fprintf(stderr, "[placeNewPlayer] after LoginPacket, sending spawn/abilities\n");
 	playerConnection->send( shared_ptr<SetSpawnPositionPacket>( new SetSpawnPositionPacket(spawnPos->x, spawnPos->y, spawnPos->z) ) );
 	playerConnection->send( shared_ptr<PlayerAbilitiesPacket>( new PlayerAbilitiesPacket(&player->abilities)) );
 	playerConnection->send( shared_ptr<SetCarriedItemPacket>( new SetCarriedItemPacket(player->inventory->selected)));
 	delete spawnPos;
-
+	fprintf(stderr, "[placeNewPlayer] about to updateScoreboard + sendLevelInfo\n");
 	updateEntireScoreboard((ServerScoreboard *) level->getScoreboard(), player);
 
 	sendLevelInfo(player, level);
+	fprintf(stderr, "[placeNewPlayer] after sendLevelInfo\n");
 
 	// 4J-PB - removed, since it needs to be localised in the language the client is in
 	//server->players->broadcastAll( shared_ptr<ChatPacket>( new ChatPacket(L"�e" + playerEntity->name + L" joined the game.") ) );
