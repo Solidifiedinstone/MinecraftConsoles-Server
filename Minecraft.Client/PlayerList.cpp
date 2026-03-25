@@ -240,16 +240,22 @@ void PlayerList::placeNewPlayer(Connection *connection, shared_ptr<ServerPlayer>
 	// 4J-PB - removed, since it needs to be localised in the language the client is in
 	//server->players->broadcastAll( shared_ptr<ChatPacket>( new ChatPacket(L"�e" + playerEntity->name + L" joined the game.") ) );
 	broadcastAll( shared_ptr<ChatPacket>( new ChatPacket(player->name, ChatPacket::e_ChatPlayerJoinedGame) ) );
+	fprintf(stderr, "[placeNewPlayer] after broadcastAll\n");
 
 	MemSect(14);
 	add(player);
 	MemSect(0);
+	fprintf(stderr, "[placeNewPlayer] after add\n");
 
-	player->doTick(true, true, false);	// 4J - added - force sending of the nearest chunk before the player is teleported, so we have somewhere to arrive on...
+	player->doTick(true, true, false);
+	fprintf(stderr, "[placeNewPlayer] after doTick\n");
 	playerConnection->teleport(player->x, player->y, player->z, player->yRot, player->xRot);
+	fprintf(stderr, "[placeNewPlayer] after teleport\n");
 
 	server->getConnection()->addPlayerConnection(playerConnection);
+	fprintf(stderr, "[placeNewPlayer] after addPlayerConnection\n");
 	playerConnection->send( shared_ptr<SetTimePacket>( new SetTimePacket(level->getGameTime(), level->getDayTime(), level->getGameRules()->getBoolean(GameRules::RULE_DAYLIGHT)) ) );
+	fprintf(stderr, "[placeNewPlayer] after SetTimePacket\n");
 
 	AUTO_VAR(activeEffects, player->getActiveEffects());
 	for(AUTO_VAR(it, activeEffects->begin()); it != activeEffects->end(); ++it)
@@ -259,6 +265,7 @@ void PlayerList::placeNewPlayer(Connection *connection, shared_ptr<ServerPlayer>
 	}
 
 	player->initMenu();
+	fprintf(stderr, "[placeNewPlayer] after initMenu\n");
 
 	if (playerTag != NULL && playerTag->contains(Entity::RIDING_TAG))
 	{
