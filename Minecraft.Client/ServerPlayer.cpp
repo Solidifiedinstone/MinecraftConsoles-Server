@@ -367,7 +367,9 @@ void ServerPlayer::doChunkSendingTick(bool dontDelayChunks)
 			}
 			else
 			{
-				bool canSendToPlayer = MinecraftServer::chunkPacketManagement_CanSendTo(connection->getNetworkPlayer());
+				INetworkPlayer *netPlayer = connection->getNetworkPlayer();
+			// TCP connections have no QNet player; treat as always sendable and rely on countDelayedPackets for backpressure
+			bool canSendToPlayer = (netPlayer == nullptr) ? (!connection->done) : MinecraftServer::chunkPacketManagement_CanSendTo(netPlayer);
 
 //				app.DebugPrintf(">>> %d\n", canSendToPlayer);
 //				if( connection->getNetworkPlayer() )
@@ -396,7 +398,7 @@ void ServerPlayer::doChunkSendingTick(bool dontDelayChunks)
 				{
 					lastBrupSendTickCount = tickCount;
 					okToSend = true;
-					MinecraftServer::chunkPacketManagement_DidSendTo(connection->getNetworkPlayer());
+					if( netPlayer != nullptr ) MinecraftServer::chunkPacketManagement_DidSendTo(netPlayer);
 
 //					static unordered_map<wstring,__int64> mapLastTime;
 //					__int64 thisTime = System::currentTimeMillis();
