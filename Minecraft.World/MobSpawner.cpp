@@ -190,11 +190,6 @@ const int MobSpawner::tick(ServerLevel *level, bool spawnEnemies, bool spawnFrie
 #endif
 	MemSect(0);
 	int count = 0;
-	static int mobSpawnLogTimer = 0;
-	if (++mobSpawnLogTimer >= 200) {
-		fprintf(stderr, "[MOBSPAWN] players=%d chunks=%d\n", (int)level->players.size(), (int)chunksToPoll.size());
-		mobSpawnLogTimer = 0;
-	}
 	MemSect(31);
 	Pos *spawnPos = level->getSharedSpawnPos();
 	MemSect(0);
