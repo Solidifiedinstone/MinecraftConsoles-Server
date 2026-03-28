@@ -563,23 +563,13 @@ void PlayerConnection::send(shared_ptr<Packet> packet)
 {
 	if( connection->getSocket() != NULL )
 	{
-		bool canReceive = server->getPlayers()->canReceiveAllPackets( player );
-		if( !canReceive )
+		if( !server->getPlayers()->canReceiveAllPackets( player ) )
 		{
 			// Check if we are allowed to send this packet type
 			if( !Packet::canSendToAnyClient(packet) )
 			{
-				int id = packet->getId();
-				if(id == 23 || id == 24 || id == 29) // AddEntity, AddMob, RemoveEntities
-					fprintf(stderr, "[SEND-DROP] player=%ls pktId=%d canReceiveAllPackets=false\n", player->name.c_str(), id);
 				return;
 			}
-		}
-		else
-		{
-			int id = packet->getId();
-			if(id == 23 || id == 24) // AddEntity, AddMob
-				fprintf(stderr, "[SEND-OK] player=%ls pktId=%d\n", player->name.c_str(), id);
 		}
 		connection->send(packet);
 	}

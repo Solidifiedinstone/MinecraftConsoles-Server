@@ -299,7 +299,8 @@ bool ServerPlayerGameMode::destroyBlock(int x, int y, int z)
 	else 
 	{
 		shared_ptr<ItemInstance> item = player->getSelectedItem();
-		bool canDestroy = player->canDestroy(Tile::tiles[t]);
+		// canDestroy (adventure mode item restriction) only applies in adventure mode; survival/creative always drop
+		bool canDestroy = !gameModeForPlayer->isAdventureRestricted() || player->canDestroy(Tile::tiles[t]);
 		if (item != NULL)
 		{
 			item->mineBlock(level, t, x, y, z, player);

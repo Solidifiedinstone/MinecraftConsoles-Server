@@ -526,7 +526,6 @@ void TrackedEntity::updatePlayer(EntityTracker *tracker, shared_ptr<ServerPlayer
 	{
 		seenBy.insert(sp);
 		shared_ptr<Packet> packet = getAddEntityPacket();
-		fprintf(stderr, "[UPDATE-PLAYER] entity type=%d id=%d visible to player %ls pkt=%d\n", (int)e->GetType(), e->entityId, sp->name.c_str(), packet->getId());
 		sp->connection->send(packet);
 
 		xap = e->xd;
