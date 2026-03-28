@@ -149,8 +149,11 @@ void PlayerList::placeNewPlayer(Connection *connection, shared_ptr<ServerPlayer>
 		}
 	}
 	player->setPlayerIndex( playerIndex );
+	CHECK_PLAYER("after setPlayerIndex");
 	player->setCustomSkin( packet->m_playerSkinId );
+	CHECK_PLAYER("after setCustomSkin");
 	player->setCustomCape( packet->m_playerCapeId );
+	CHECK_PLAYER("after setCustomCape");
 
 	fprintf(stderr, "[placeNewPlayer] after playerIndex, about to create PlayerConnection\n");
 	CHECK_PLAYER("after playerIndex");
