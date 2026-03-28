@@ -84,8 +84,9 @@ void PlayerList::placeNewPlayer(Connection *connection, shared_ptr<ServerPlayer>
 
 	// Make sure these privileges are always turned off for the host player
 	INetworkPlayer *networkPlayer = connection->getSocket()->getPlayer();
-	if(networkPlayer != NULL && networkPlayer->IsHost())
+	if(networkPlayer == NULL || networkPlayer->IsHost())
 	{
+		// TCP players (null networkPlayer) get full privileges like the host
 		player->enableAllPlayerPrivileges(true);			
 		player->setPlayerGamePrivilege(Player::ePlayerGamePrivilege_HOST,1);
 	}
@@ -507,9 +508,10 @@ shared_ptr<ServerPlayer> PlayerList::getPlayerForLogin(PendingConnection *pendin
 
 	// Work out the base server player settings
 	INetworkPlayer *networkPlayer = pendingConnection->connection->getSocket()->getPlayer();
-	if(networkPlayer != NULL && !networkPlayer->IsHost())
+	// TCP players (null networkPlayer) always get full privileges
+	if(networkPlayer == NULL || !networkPlayer->IsHost())
 	{
-		player->enableAllPlayerPrivileges( app.GetGameHostOption(eGameHostOption_TrustPlayers)>0 );
+		player->enableAllPlayerPrivileges( networkPlayer == nullptr ? true : (app.GetGameHostOption(eGameHostOption_TrustPlayers)>0) );
 	}
 
 	// 4J Added
@@ -1533,10 +1535,8 @@ void PlayerList::addPlayerToReceiving(shared_ptr<ServerPlayer> player)
 
 	if( thisPlayer == NULL )
 	{
-#ifndef _CONTENT_PACKAGE
-		app.DebugPrintf("Add: Qnet player for player %ls is NULL so not adding them\n", player->name.c_str() );
-#endif
-		shouldAddPlayer = false;
+		// TCP player: no QNet player, but still needs full packet access as primary
+		// (shouldAddPlayer stays true)
 	}
 	else
 	{

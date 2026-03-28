@@ -1020,7 +1020,7 @@ void MinecraftServer::stopServer(bool didInit)
 	if((m_bPrimaryPlayerSignedOut==false) && ProfileManager.IsSignedIn(ProfileManager.GetPrimaryPad()))
 #endif
 	{
-#if defined(_XBOX_ONE) || defined(__ORBIS__)
+#if defined(_XBOX_ONE) || defined(__ORBIS__) || defined(_DEDICATED_SERVER)
 		// Always save on exit! Except if saves are disabled.
 		if(!saveOnExitAnswered()) m_saveOnExit = true;
 #endif
