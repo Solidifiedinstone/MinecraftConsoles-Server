@@ -617,7 +617,7 @@ int Connection::runRead(void* lpParam)
 
 int Connection::runWrite(void* lpParam)
 {
-	fprintf(stderr, "[runWrite] thread started\n");
+	fprintf(stderr, "[runWrite] thread started tid=%lu\n", (unsigned long)GetCurrentThreadId());
 	ShutdownManager::HasStarted(ShutdownManager::eConnectionWriteThreads);
 	Connection *con = dynamic_cast<Connection *>((Connection *) lpParam);
 

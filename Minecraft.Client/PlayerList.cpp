@@ -75,7 +75,7 @@ PlayerList::~PlayerList()
 
 void PlayerList::placeNewPlayer(Connection *connection, shared_ptr<ServerPlayer> player, shared_ptr<LoginPacket> packet)
 {
-	fprintf(stderr, "[placeNewPlayer] entered\n");
+	fprintf(stderr, "[placeNewPlayer] entered tid=%lu\n", (unsigned long)GetCurrentThreadId());
 	CompoundTag *playerTag = load(player);
 	fprintf(stderr, "[placeNewPlayer] after load\n");
 
@@ -266,9 +266,8 @@ void PlayerList::placeNewPlayer(Connection *connection, shared_ptr<ServerPlayer>
 		playerConnection->send(shared_ptr<UpdateMobEffectPacket>( new UpdateMobEffectPacket(player->entityId, effect) ) );
 	}
 	fprintf(stderr, "[placeNewPlayer] after activeEffects loop\n");
-
-	fprintf(stderr, "[placeNewPlayer] pre-initMenu containerMenu=%p inventoryMenu=%p\n",
-		(void*)player->containerMenu, (void*)player->inventoryMenu);
+	fprintf(stderr, "[placeNewPlayer] pre-initMenu tid=%lu containerMenu=%p inventoryMenu=%p\n",
+		(unsigned long)GetCurrentThreadId(), (void*)player->containerMenu, (void*)player->inventoryMenu);
 	player->initMenu();
 	fprintf(stderr, "[placeNewPlayer] after initMenu\n");
 
