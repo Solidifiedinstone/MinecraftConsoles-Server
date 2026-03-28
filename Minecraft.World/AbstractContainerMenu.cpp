@@ -21,6 +21,7 @@ AbstractContainerMenu::AbstractContainerMenu()
 
 AbstractContainerMenu::~AbstractContainerMenu()
 {
+	fprintf(stderr, "[~AbstractContainerMenu] this=%p\n", this);
 	for( unsigned int i = 0; i < slots.size(); i++ )
 	{
 		delete slots.at(i);

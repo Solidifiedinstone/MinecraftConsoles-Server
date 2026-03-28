@@ -267,6 +267,9 @@ void PlayerList::placeNewPlayer(Connection *connection, shared_ptr<ServerPlayer>
 	}
 	fprintf(stderr, "[placeNewPlayer] after activeEffects loop\n");
 
+	fprintf(stderr, "[placeNewPlayer] pre-initMenu containerMenu=%p vptr=0x%llx\n",
+		(void*)player->containerMenu,
+		player->containerMenu ? *(unsigned long long*)player->containerMenu : 0ULL);
 	player->initMenu();
 	fprintf(stderr, "[placeNewPlayer] after initMenu\n");
 
