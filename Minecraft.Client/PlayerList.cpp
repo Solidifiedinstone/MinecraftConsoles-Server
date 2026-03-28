@@ -81,9 +81,16 @@ void PlayerList::placeNewPlayer(Connection *connection, shared_ptr<ServerPlayer>
 	unsigned long long _vp = _cm ? *(unsigned long long*)_cm : 0ULL; \
 	fprintf(stderr, "[chk " tag "] cm=%p vptr=0x%llx\n", _cm, _vp); \
 } while(0)
+#define CHECK_PLAYER(tag) do { \
+	net_minecraft_world_inventory::ContainerListener *_cl = player.get(); \
+	unsigned long long _pvp = *(unsigned long long*)_cl; \
+	fprintf(stderr, "[chkp " tag "] cl=%p vptr=0x%llx\n", (void*)_cl, _pvp); \
+} while(0)
 	CHECK_MENU("start");
+	CHECK_PLAYER("start");
 	CompoundTag *playerTag = load(player);
 	CHECK_MENU("after load");
+	CHECK_PLAYER("after load");
 	fprintf(stderr, "[placeNewPlayer] after load\n");
 
 	bool newPlayer = playerTag == NULL;
@@ -201,6 +208,7 @@ void PlayerList::placeNewPlayer(Connection *connection, shared_ptr<ServerPlayer>
 	}
 
 	CHECK_MENU("after texture");
+	CHECK_PLAYER("after texture");
 	fprintf(stderr, "[placeNewPlayer] after texture handling\n");
 	player->setIsGuest( packet->m_isGuest );
 
@@ -208,6 +216,7 @@ void PlayerList::placeNewPlayer(Connection *connection, shared_ptr<ServerPlayer>
 
 	updatePlayerGameMode(player, nullptr, level);
 	CHECK_MENU("after gameMode");
+	CHECK_PLAYER("after gameMode");
 	fprintf(stderr, "[placeNewPlayer] after updatePlayerGameMode\n");
 
 	// Update the privileges with the correct game mode
@@ -231,6 +240,7 @@ void PlayerList::placeNewPlayer(Connection *connection, shared_ptr<ServerPlayer>
 
 	addPlayerToReceiving( player );
 	CHECK_MENU("before LoginPkt");
+	CHECK_PLAYER("before LoginPkt");
 	fprintf(stderr, "[placeNewPlayer] about to send LoginPacket\n");
 	playerConnection->send( shared_ptr<LoginPacket>( new LoginPacket(L"", player->entityId, level->getLevelData()->getGenerator(), level->getSeed(), player->gameMode->getGameModeForPlayer()->getId(),
 		(byte) level->dimension->id, (byte) level->getMaxBuildHeight(), (byte) getMaxPlayers(),
@@ -246,30 +256,36 @@ void PlayerList::placeNewPlayer(Connection *connection, shared_ptr<ServerPlayer>
 
 	sendLevelInfo(player, level);
 	CHECK_MENU("after levelInfo");
+	CHECK_PLAYER("after levelInfo");
 	fprintf(stderr, "[placeNewPlayer] after sendLevelInfo\n");
 
 	// 4J-PB - removed, since it needs to be localised in the language the client is in
 	//server->players->broadcastAll( shared_ptr<ChatPacket>( new ChatPacket(L"�e" + playerEntity->name + L" joined the game.") ) );
 	broadcastAll( shared_ptr<ChatPacket>( new ChatPacket(player->name, ChatPacket::e_ChatPlayerJoinedGame) ) );
 	CHECK_MENU("after broadcastAll");
+	CHECK_PLAYER("after broadcastAll");
 	fprintf(stderr, "[placeNewPlayer] after broadcastAll\n");
 
 	MemSect(14);
 	add(player);
 	MemSect(0);
 	CHECK_MENU("after add");
+	CHECK_PLAYER("after add");
 	fprintf(stderr, "[placeNewPlayer] after add\n");
 
 	player->doTick(true, true, false);
 	CHECK_MENU("after doTick");
+	CHECK_PLAYER("after doTick");
 	fprintf(stderr, "[placeNewPlayer] after doTick\n");
 	playerConnection->teleport(player->x, player->y, player->z, player->yRot, player->xRot);
 	CHECK_MENU("after teleport");
+	CHECK_PLAYER("after teleport");
 	fprintf(stderr, "[placeNewPlayer] after teleport\n");
 
 	server->getConnection()->addPlayerConnection(playerConnection);
 	fprintf(stderr, "[placeNewPlayer] after addPlayerConnection\n");
 	CHECK_MENU("before SetTimePacket");
+	CHECK_PLAYER("before SetTimePacket");
 	playerConnection->send( shared_ptr<SetTimePacket>( new SetTimePacket(level->getGameTime(), level->getDayTime(), level->getGameRules()->getBoolean(GameRules::RULE_DAYLIGHT)) ) );
 	fprintf(stderr, "[placeNewPlayer] after SetTimePacket\n");
 
@@ -283,6 +299,7 @@ void PlayerList::placeNewPlayer(Connection *connection, shared_ptr<ServerPlayer>
 	}
 	fprintf(stderr, "[placeNewPlayer] after activeEffects loop\n");
 	CHECK_MENU("after effects");
+	CHECK_PLAYER("after effects");
 	fprintf(stderr, "[placeNewPlayer] pre-initMenu tid=%lu containerMenu=%p inventoryMenu=%p\n",
 		(unsigned long)GetCurrentThreadId(), (void*)player->containerMenu, (void*)player->inventoryMenu);
 	player->initMenu();
