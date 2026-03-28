@@ -563,14 +563,23 @@ void PlayerConnection::send(shared_ptr<Packet> packet)
 {
 	if( connection->getSocket() != NULL )
 	{
-		if( !server->getPlayers()->canReceiveAllPackets( player ) )
+		bool canReceive = server->getPlayers()->canReceiveAllPackets( player );
+		if( !canReceive )
 		{
 			// Check if we are allowed to send this packet type
 			if( !Packet::canSendToAnyClient(packet) )
 			{
-				//wprintf(L"Not the systems primary player, so not sending them a packet : %ls / %d\n", player->name.c_str(), packet->getId() );
+				int id = packet->getId();
+				if(id == 23 || id == 24 || id == 29) // AddEntity, AddMob, RemoveEntities
+					fprintf(stderr, "[SEND-DROP] player=%ls pktId=%d canReceiveAllPackets=false\n", player->name.c_str(), id);
 				return;
 			}
+		}
+		else
+		{
+			int id = packet->getId();
+			if(id == 23 || id == 24) // AddEntity, AddMob
+				fprintf(stderr, "[SEND-OK] player=%ls pktId=%d\n", player->name.c_str(), id);
 		}
 		connection->send(packet);
 	}
