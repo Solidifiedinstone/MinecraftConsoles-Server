@@ -258,11 +258,13 @@ void PlayerList::placeNewPlayer(Connection *connection, shared_ptr<ServerPlayer>
 	fprintf(stderr, "[placeNewPlayer] after SetTimePacket\n");
 
 	AUTO_VAR(activeEffects, player->getActiveEffects());
+	fprintf(stderr, "[placeNewPlayer] activeEffects ptr=%p\n", activeEffects);
 	for(AUTO_VAR(it, activeEffects->begin()); it != activeEffects->end(); ++it)
 	{
 		MobEffectInstance *effect = *it;
 		playerConnection->send(shared_ptr<UpdateMobEffectPacket>( new UpdateMobEffectPacket(player->entityId, effect) ) );
 	}
+	fprintf(stderr, "[placeNewPlayer] after activeEffects loop\n");
 
 	player->initMenu();
 	fprintf(stderr, "[placeNewPlayer] after initMenu\n");
