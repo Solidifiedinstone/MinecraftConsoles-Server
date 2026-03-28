@@ -35,6 +35,7 @@ void ServerLevelListener::allChanged()
 
 void ServerLevelListener::entityAdded(shared_ptr<Entity> entity)
 {
+	fprintf(stderr, "[ENTITY-ADDED] type=%d id=%d\n", (int)entity->GetType(), entity->entityId);
 	MemSect(10);
 	level->getTracker()->addEntity(entity);
 	MemSect(0);
