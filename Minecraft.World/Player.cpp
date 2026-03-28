@@ -718,10 +718,14 @@ void Player::setCustomSkin(DWORD skinId)
 	}*/
 
 	// reset the check for model parts
+	LOG_SKIN_VTABLE("preChecked");
 	m_bCheckedForModelParts=false;
+	LOG_SKIN_VTABLE("afterChecked1");
 	m_bCheckedDLCForModelParts=false;
+	LOG_SKIN_VTABLE("afterChecked2");
 	this->SetAdditionalModelParts(NULL);
-
+	LOG_SKIN_VTABLE("afterSetModelParts");
+	#undef LOG_SKIN_VTABLE
 
 }
 
