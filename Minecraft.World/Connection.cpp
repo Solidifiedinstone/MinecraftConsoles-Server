@@ -211,7 +211,7 @@ bool Connection::writeTick()
 #ifndef _CONTENT_PACKAGE
 		// 4J Added for debugging
 		int playerId = 0;
-		if( !socket->isLocal() ) 
+		if( socket && !socket->isLocal() )
 		{
 			Socket *socket = getSocket();
 			if( socket )
@@ -274,22 +274,19 @@ bool Connection::writeTick()
 
 #ifndef _CONTENT_PACKAGE
 		// 4J Added for debugging
-		if( !socket->isLocal() ) 
+		if( socket && !socket->isLocal() )
 		{
 			int playerId = 0;
-			if( !socket->isLocal() ) 
+			Socket *socket = getSocket();
+			if( socket )
 			{
-				Socket *socket = getSocket();
-				if( socket )
+				INetworkPlayer *player = socket->getPlayer();
+				if( player )
 				{
-					INetworkPlayer *player = socket->getPlayer();
-					if( player )
-					{
-						playerId = player->GetSmallId();
-					}
+					playerId = player->GetSmallId();
 				}
-				Packet::recordOutgoingPacket(packet,playerId);
 			}
+			Packet::recordOutgoingPacket(packet,playerId);
 		}
 #endif	
 
