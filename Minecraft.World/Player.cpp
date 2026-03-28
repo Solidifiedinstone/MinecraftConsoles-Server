@@ -640,6 +640,9 @@ void Player::setPlayerDefaultSkin(EDefaultSkins skin)
 
 void Player::setCustomSkin(DWORD skinId)
 {
+	static const size_t CL_OFFSET = 0x550;
+	#define LOG_SKIN_VTABLE(label) fprintf(stderr, "[skin:" label "] vptr@0x550=0x%llx\n", *(unsigned long long*)((char*)this + CL_OFFSET))
+	LOG_SKIN_VTABLE("start");
 #ifndef _CONTENT_PACKAGE
 	wprintf(L"Attempting to set skin to %08X for player %ls\n", skinId, name.c_str() );
 #endif
@@ -647,11 +650,13 @@ void Player::setCustomSkin(DWORD skinId)
 
 	// reset the idle
 	setIsIdle(false);
+	LOG_SKIN_VTABLE("afterIdle");
 
 	setAnimOverrideBitmask(getSkinAnimOverrideBitmask(skinId));
+	LOG_SKIN_VTABLE("afterAnim");
 	if( !GET_IS_DLC_SKIN_FROM_BITMASK(skinId) )
-	{	
-		// GET_UGC_SKIN_ID_FROM_BITMASK will always be zero - this was for a possible custom skin editor skin 
+	{
+		// GET_UGC_SKIN_ID_FROM_BITMASK will always be zero - this was for a possible custom skin editor skin
 		DWORD ugcSkinIndex = GET_UGC_SKIN_ID_FROM_BITMASK(skinId);
 		DWORD defaultSkinIndex = GET_DEFAULT_SKIN_ID_FROM_BITMASK(skinId);
 		if( ugcSkinIndex == 0 && defaultSkinIndex > 0 )
@@ -667,9 +672,12 @@ void Player::setCustomSkin(DWORD skinId)
 
 	// We always set a default skin, since we may be waiting for the player's custom skin to be transmitted
 	setPlayerDefaultSkin( playerSkin );
+	LOG_SKIN_VTABLE("afterDefaultSkin");
 
 	m_dwSkinId = skinId;
 	this->customTextureUrl = app.getSkinPathFromId(skinId);
+	LOG_SKIN_VTABLE("afterUrlAssign");
+	fprintf(stderr, "[skin:url] skinId=0x%08X url='%ls'\n", skinId, customTextureUrl.c_str());
 
 	// set the new player additional boxes
 	/*vector<ModelPart *> *pvModelParts=app.GetAdditionalModelParts(m_dwSkinId);

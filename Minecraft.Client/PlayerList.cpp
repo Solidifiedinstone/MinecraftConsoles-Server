@@ -81,11 +81,11 @@ void PlayerList::placeNewPlayer(Connection *connection, shared_ptr<ServerPlayer>
 	unsigned long long _vp = _cm ? *(unsigned long long*)_cm : 0ULL; \
 	fprintf(stderr, "[chk " tag "] cm=%p vptr=0x%llx\n", _cm, _vp); \
 } while(0)
-#define CHECK_PLAYER(tag) do { \
-	net_minecraft_world_inventory::ContainerListener *_cl = player.get(); \
-	unsigned long long _pvp = *(unsigned long long*)_cl; \
-	fprintf(stderr, "[chkp " tag "] cl=%p vptr=0x%llx\n", (void*)_cl, _pvp); \
-} while(0)
+static __declspec(noinline) void _checkPlayer(const char *tag, net_minecraft_world_inventory::ContainerListener *cl) {
+	unsigned long long vp = *(unsigned long long*)cl;
+	fprintf(stderr, "[chkp %s] cl=%p vptr=0x%llx\n", tag, (void*)cl, vp);
+}
+#define CHECK_PLAYER(tag) _checkPlayer(tag, player.get())
 	CHECK_MENU("start");
 	CHECK_PLAYER("start");
 	{
