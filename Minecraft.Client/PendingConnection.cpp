@@ -60,7 +60,6 @@ void PendingConnection::disconnect(DisconnectPacket::eDisconnectReason reason)
 {
 	//   try {	// 4J - removed try/catch
 	//        logger.info("Disconnecting " + getName() + ": " + reason);
-	fprintf(stderr, "[PendingConnection] disconnect: reason=%d\n", reason);
 	app.DebugPrintf("Pending connection disconnect: %d\n", reason );
 	connection->send( shared_ptr<DisconnectPacket>( new DisconnectPacket(reason) ) );
 	connection->sendAndQuit();
@@ -72,7 +71,6 @@ void PendingConnection::disconnect(DisconnectPacket::eDisconnectReason reason)
 
 void PendingConnection::handlePreLogin(shared_ptr<PreLoginPacket> packet)
 {
-	fprintf(stderr, "[PendingConnection] handlePreLogin: netcodeVersion=%d (expected %d)\n", packet->m_netcodeVersion, MINECRAFT_NET_VERSION);
 	if (packet->m_netcodeVersion != MINECRAFT_NET_VERSION)
 	{
 		app.DebugPrintf("Netcode version is %d not equal to %d\n", packet->m_netcodeVersion, MINECRAFT_NET_VERSION);
@@ -86,7 +84,6 @@ void PendingConnection::handlePreLogin(shared_ptr<PreLoginPacket> packet)
 		}
 		return;
 	}
-	fprintf(stderr, "[PendingConnection] handlePreLogin: OK, sending PreLoginResponse\n");
 	name = packet->loginKey; // 4J Stu - Change from the login packet as we know better on client end during the pre-login packet
 	sendPreLoginResponse();
 }
@@ -141,7 +138,6 @@ void PendingConnection::sendPreLoginResponse()
 
 void PendingConnection::handleLogin(shared_ptr<LoginPacket> packet)
 {
-	fprintf(stderr, "[PendingConnection] handleLogin: clientVersion=%d\n", packet->clientVersion);
 	//name = packet->userName;
 	if (packet->clientVersion != SharedConstants::NETWORK_PROTOCOL_VERSION)
 	{
@@ -202,7 +198,6 @@ void PendingConnection::handleLogin(shared_ptr<LoginPacket> packet)
 
 void PendingConnection::handleAcceptedLogin(shared_ptr<LoginPacket> packet)
 {
-	fprintf(stderr, "[PendingConnection] handleAcceptedLogin entered\n");
 	if(packet->m_ugcPlayersVersion != server->m_ugcPlayersVersion)
 	{
 		// Send the pre-login packet again with the new list of players

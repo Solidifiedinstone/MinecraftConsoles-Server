@@ -96,25 +96,19 @@ LoginPacket::LoginPacket(const wstring& userName, int clientVersion, LevelType *
 
 void LoginPacket::read(DataInputStream *dis) //throws IOException
 {
-	fprintf(stderr, "[LoginPacket::read] start\n");
 	clientVersion = dis->readInt();
-	fprintf(stderr, "[LoginPacket::read] clientVersion=%d\n", clientVersion);
 	userName = readUtf(dis, Player::MAX_NAME_LENGTH);
-	fprintf(stderr, "[LoginPacket::read] after userName\n");
 	wstring typeName = readUtf(dis, 16);
-	fprintf(stderr, "[LoginPacket::read] after typeName\n");
 	m_pLevelType = LevelType::getLevelType(typeName);
 	if (m_pLevelType == NULL)
 	{
 		m_pLevelType = LevelType::lvl_normal;
 	}
-	fprintf(stderr, "[LoginPacket::read] after LevelType\n");
 	seed = dis->readLong();
 	gameType = dis->readInt();
 	dimension = dis->readByte();
 	mapHeight = dis->readByte();
 	maxPlayers = dis->readByte();
-	fprintf(stderr, "[LoginPacket::read] after dimension/height/maxPlayers\n");
 	m_offlineXuid = dis->readPlayerUID();
 	m_onlineXuid = dis->readPlayerUID();
 	m_friendsOnlyUGC = dis->readBoolean();
@@ -129,14 +123,11 @@ void LoginPacket::read(DataInputStream *dis) //throws IOException
 	m_isGuest = dis->readBoolean();
 	m_newSeaLevel = dis->readBoolean();
 	m_uiGamePrivileges = dis->readInt();
-	fprintf(stderr, "[LoginPacket::read] after xuid/skin/priv\n");
 #ifdef _LARGE_WORLDS
 	m_xzSize = dis->readShort();
 	m_hellScale = dis->read();
-	fprintf(stderr, "[LoginPacket::read] after LARGE_WORLDS fields\n");
 #endif
 	app.DebugPrintf("LoginPacket::read - Difficulty = %d\n",difficulty);
-	fprintf(stderr, "[LoginPacket::read] done\n");
 
 }
 

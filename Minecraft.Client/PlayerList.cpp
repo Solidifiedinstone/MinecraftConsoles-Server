@@ -73,41 +73,14 @@ PlayerList::~PlayerList()
 	DeleteCriticalSection(&m_closePlayersCS);
 }
 
-static __declspec(noinline) void _checkPlayer(const char *tag, net_minecraft_world_inventory::ContainerListener *cl) {
-	unsigned long long vp = *(unsigned long long*)cl;
-	fprintf(stderr, "[chkp %s] cl=%p vptr=0x%llx\n", tag, (void*)cl, vp);
-}
-
 void PlayerList::placeNewPlayer(Connection *connection, shared_ptr<ServerPlayer> player, shared_ptr<LoginPacket> packet)
 {
-	fprintf(stderr, "[placeNewPlayer] entered tid=%lu\n", (unsigned long)GetCurrentThreadId());
-#define CHECK_MENU(tag) do { \
-	void *_cm = player->containerMenu; \
-	unsigned long long _vp = _cm ? *(unsigned long long*)_cm : 0ULL; \
-	fprintf(stderr, "[chk " tag "] cm=%p vptr=0x%llx\n", _cm, _vp); \
-} while(0)
-#define CHECK_PLAYER(tag) _checkPlayer(tag, player.get())
-	CHECK_MENU("start");
-	CHECK_PLAYER("start");
-	{
-		net_minecraft_world_inventory::ContainerListener *_cl = player.get();
-		fprintf(stderr, "[layout] player=%p cl=%p name=%p textureUrl=%p textureUrl2=%p\n",
-			(void*)player.get(), (void*)_cl,
-			(void*)&player->name, (void*)&player->customTextureUrl, (void*)&player->customTextureUrl2);
-	}
 	CompoundTag *playerTag = load(player);
-	CHECK_MENU("after load");
-	CHECK_PLAYER("after load");
-	fprintf(stderr, "[placeNewPlayer] after load\n");
 
 	bool newPlayer = playerTag == NULL;
 
 	player->setLevel(server->getLevel(player->dimension));
-	fprintf(stderr, "[placeNewPlayer] after setLevel\n");
-	CHECK_PLAYER("after setLevel");
 	player->gameMode->setLevel((ServerLevel *)player->level);
-	fprintf(stderr, "[placeNewPlayer] after gameMode->setLevel\n");
-	CHECK_PLAYER("after gameModeSetLevel");
 
 	// Make sure these privileges are always turned off for the host player
 	INetworkPlayer *networkPlayer = connection->getSocket()->getPlayer();
@@ -131,8 +104,6 @@ void PlayerList::placeNewPlayer(Connection *connection, shared_ptr<ServerPlayer>
 	// 4J Stu - TU-1 hotfix
 	// Fix for #13150 - When a player loads/joins a game after saving/leaving in the nether, sometimes they are spawned on top of the nether and cannot mine down
 	validatePlayerSpawnPosition(player);
-	fprintf(stderr, "[placeNewPlayer] after validateSpawn\n");
-	CHECK_PLAYER("after validateSpawn");
 
 	//        logger.info(getName() + " logged in with entity id " + playerEntity.entityId + " at (" + playerEntity.x + ", " + playerEntity.y + ", " + playerEntity.z + ")");
 
@@ -156,19 +127,11 @@ void PlayerList::placeNewPlayer(Connection *connection, shared_ptr<ServerPlayer>
 		}
 	}
 	player->setPlayerIndex( playerIndex );
-	CHECK_PLAYER("after setPlayerIndex");
 	player->setCustomSkin( packet->m_playerSkinId );
-	CHECK_PLAYER("after setCustomSkin");
-	fprintf(stderr, "[skinUrl] skinId=0x%08X url='%ls'\n", packet->m_playerSkinId, player->customTextureUrl.c_str());
 	player->setCustomCape( packet->m_playerCapeId );
-	CHECK_PLAYER("after setCustomCape");
 
-	fprintf(stderr, "[placeNewPlayer] after playerIndex, about to create PlayerConnection\n");
-	CHECK_PLAYER("after playerIndex");
 	// 4J-JEV: Moved this here so we can send player-model texture and geometry data.
 	shared_ptr<PlayerConnection> playerConnection = shared_ptr<PlayerConnection>(new PlayerConnection(server, connection, player));
-	fprintf(stderr, "[placeNewPlayer] PlayerConnection created\n");
-	CHECK_PLAYER("after PlayerConn");
 	//player->connection = playerConnection;	// Used to be assigned in PlayerConnection ctor but moved out so we can use shared_ptr
 
 	if(newPlayer)
@@ -223,17 +186,11 @@ void PlayerList::placeNewPlayer(Connection *connection, shared_ptr<ServerPlayer>
 		app.AddMemoryTextureFile(player->customTextureUrl2,NULL,0);
 	}
 
-	CHECK_MENU("after texture");
-	CHECK_PLAYER("after texture");
-	fprintf(stderr, "[placeNewPlayer] after texture handling\n");
 	player->setIsGuest( packet->m_isGuest );
 
 	Pos *spawnPos = level->getSharedSpawnPos();
 
 	updatePlayerGameMode(player, nullptr, level);
-	CHECK_MENU("after gameMode");
-	CHECK_PLAYER("after gameMode");
-	fprintf(stderr, "[placeNewPlayer] after updatePlayerGameMode\n");
 
 	// Update the privileges with the correct game mode
 	GameType *gameType = Player::getPlayerGamePrivilege(player->getAllPlayerGamePrivileges(),Player::ePlayerGamePrivilege_CreativeMode) ? GameType::CREATIVE : GameType::SURVIVAL;
@@ -255,71 +212,39 @@ void PlayerList::placeNewPlayer(Connection *connection, shared_ptr<ServerPlayer>
 	if(packet->m_friendsOnlyUGC) ++server->m_ugcPlayersVersion;
 
 	addPlayerToReceiving( player );
-	CHECK_MENU("before LoginPkt");
-	CHECK_PLAYER("before LoginPkt");
-	fprintf(stderr, "[placeNewPlayer] about to send LoginPacket\n");
 	playerConnection->send( shared_ptr<LoginPacket>( new LoginPacket(L"", player->entityId, level->getLevelData()->getGenerator(), level->getSeed(), player->gameMode->getGameModeForPlayer()->getId(),
 		(byte) level->dimension->id, (byte) level->getMaxBuildHeight(), (byte) getMaxPlayers(),
 		level->difficulty, TelemetryManager->GetMultiplayerInstanceID(), (BYTE)playerIndex, level->useNewSeaLevel(), player->getAllPlayerGamePrivileges(),
 		level->getLevelData()->getXZSize(), level->getLevelData()->getHellScale() ) ) );
-	fprintf(stderr, "[placeNewPlayer] after LoginPacket, sending spawn/abilities\n");
 	playerConnection->send( shared_ptr<SetSpawnPositionPacket>( new SetSpawnPositionPacket(spawnPos->x, spawnPos->y, spawnPos->z) ) );
 	playerConnection->send( shared_ptr<PlayerAbilitiesPacket>( new PlayerAbilitiesPacket(&player->abilities)) );
 	playerConnection->send( shared_ptr<SetCarriedItemPacket>( new SetCarriedItemPacket(player->inventory->selected)));
 	delete spawnPos;
-	fprintf(stderr, "[placeNewPlayer] about to updateScoreboard + sendLevelInfo\n");
 	updateEntireScoreboard((ServerScoreboard *) level->getScoreboard(), player);
 
 	sendLevelInfo(player, level);
-	CHECK_MENU("after levelInfo");
-	CHECK_PLAYER("after levelInfo");
-	fprintf(stderr, "[placeNewPlayer] after sendLevelInfo\n");
 
 	// 4J-PB - removed, since it needs to be localised in the language the client is in
 	//server->players->broadcastAll( shared_ptr<ChatPacket>( new ChatPacket(L"�e" + playerEntity->name + L" joined the game.") ) );
 	broadcastAll( shared_ptr<ChatPacket>( new ChatPacket(player->name, ChatPacket::e_ChatPlayerJoinedGame) ) );
-	CHECK_MENU("after broadcastAll");
-	CHECK_PLAYER("after broadcastAll");
-	fprintf(stderr, "[placeNewPlayer] after broadcastAll\n");
 
 	MemSect(14);
 	add(player);
 	MemSect(0);
-	CHECK_MENU("after add");
-	CHECK_PLAYER("after add");
-	fprintf(stderr, "[placeNewPlayer] after add\n");
 
 	player->doTick(true, true, false);
-	CHECK_MENU("after doTick");
-	CHECK_PLAYER("after doTick");
-	fprintf(stderr, "[placeNewPlayer] after doTick\n");
 	playerConnection->teleport(player->x, player->y, player->z, player->yRot, player->xRot);
-	CHECK_MENU("after teleport");
-	CHECK_PLAYER("after teleport");
-	fprintf(stderr, "[placeNewPlayer] after teleport\n");
 
 	server->getConnection()->addPlayerConnection(playerConnection);
-	fprintf(stderr, "[placeNewPlayer] after addPlayerConnection\n");
-	CHECK_MENU("before SetTimePacket");
-	CHECK_PLAYER("before SetTimePacket");
 	playerConnection->send( shared_ptr<SetTimePacket>( new SetTimePacket(level->getGameTime(), level->getDayTime(), level->getGameRules()->getBoolean(GameRules::RULE_DAYLIGHT)) ) );
-	fprintf(stderr, "[placeNewPlayer] after SetTimePacket\n");
 
-	fprintf(stderr, "[placeNewPlayer] player.get()=%p vptr=0x%llx\n", player.get(), player.get() ? *(unsigned long long*)player.get() : 0ULL);
 	AUTO_VAR(activeEffects, player->getActiveEffects());
-	fprintf(stderr, "[placeNewPlayer] activeEffects ptr=%p\n", activeEffects);
 	for(AUTO_VAR(it, activeEffects->begin()); it != activeEffects->end(); ++it)
 	{
 		MobEffectInstance *effect = *it;
 		playerConnection->send(shared_ptr<UpdateMobEffectPacket>( new UpdateMobEffectPacket(player->entityId, effect) ) );
 	}
-	fprintf(stderr, "[placeNewPlayer] after activeEffects loop\n");
-	CHECK_MENU("after effects");
-	CHECK_PLAYER("after effects");
-	fprintf(stderr, "[placeNewPlayer] pre-initMenu tid=%lu containerMenu=%p inventoryMenu=%p\n",
-		(unsigned long)GetCurrentThreadId(), (void*)player->containerMenu, (void*)player->inventoryMenu);
 	player->initMenu();
-	fprintf(stderr, "[placeNewPlayer] after initMenu\n");
 
 	if (playerTag != NULL && playerTag->contains(Entity::RIDING_TAG))
 	{

@@ -222,12 +222,7 @@ void ServerPlayer::giveExperienceLevels(int amount)
 
 void ServerPlayer::initMenu()
 {
-	net_minecraft_world_inventory::ContainerListener *cl = this;
-	fprintf(stderr, "[initMenu] this=%p cl=%p cl_vptr=0x%llx containerMenu=%p cm_vptr=0x%llx\n",
-		(void*)this, (void*)cl, *(unsigned long long*)cl,
-		(void*)containerMenu, containerMenu ? *(unsigned long long*)containerMenu : 0ULL);
 	containerMenu->addSlotListener(this);
-	fprintf(stderr, "[initMenu] done\n");
 }
 
 void ServerPlayer::setDefaultHeadHeight()

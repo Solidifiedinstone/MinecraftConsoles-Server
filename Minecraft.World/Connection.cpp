@@ -203,9 +203,7 @@ bool Connection::writeTick()
 
 		LeaveCriticalSection(&writeLock);
 
-		fprintf(stderr, "[writeTick] writePacket id=%d\n", packet->getId());
 		Packet::writePacket(packet, bufferedDos);
-		fprintf(stderr, "[writeTick] writePacket done\n");
 		
 
 #ifndef _CONTENT_PACKAGE
@@ -617,7 +615,6 @@ int Connection::runRead(void* lpParam)
 
 int Connection::runWrite(void* lpParam)
 {
-	fprintf(stderr, "[runWrite] thread started tid=%lu\n", (unsigned long)GetCurrentThreadId());
 	ShutdownManager::HasStarted(ShutdownManager::eConnectionWriteThreads);
 	Connection *con = dynamic_cast<Connection *>((Connection *) lpParam);
 
@@ -627,11 +624,9 @@ int Connection::runWrite(void* lpParam)
 		return 0;
 	}
 
-	fprintf(stderr, "[runWrite] calling UseDefaultThreadStorage\n");
 	Compression::UseDefaultThreadStorage();
 	FireworksRecipe::UseDefaultThreadStorage();
 	OldChunkStorage::UseDefaultThreadStorage();
-	fprintf(stderr, "[runWrite] storage setup done, entering loop\n");
 
 	CRITICAL_SECTION *cs = &con->threadCounterLock;
 
@@ -652,7 +647,7 @@ int Connection::runWrite(void* lpParam)
 		// TODO - 4J Stu - 1.8.2 changes these sleeps to 2L, but not sure whether we should do that as well	
 		waitResult = con->m_hWakeWriteThread->WaitForSignal(100L);
 
-		if (con->bufferedDos != NULL) { fprintf(stderr, "[runWrite] calling flush\n"); con->bufferedDos->flush(); fprintf(stderr, "[runWrite] flush done\n"); }
+		if (con->bufferedDos != NULL) { con->bufferedDos->flush(); }
 		//if (con->byteArrayDos != NULL) con->byteArrayDos->flush();
 	}
 
