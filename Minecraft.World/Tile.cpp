@@ -1191,6 +1191,7 @@ void Tile::updateDefaultShape()
 
 void Tile::playerDestroy(Level *level, shared_ptr<Player> player, int x, int y, int z, int data)
 {
+	fprintf(stderr, "[PD] start id=%d\n", id);
 	// 4J Stu - Special case - only record a crop destroy if is fully grown
 	if( id==Tile::wheat_Id )
 	{
@@ -1223,15 +1224,19 @@ void Tile::playerDestroy(Level *level, shared_ptr<Player> player, int x, int y, 
 			GenericStats::param_blocksMined(id,data,1)
 			);
 	}
+	fprintf(stderr, "[PD] after blocksMined\n");
 	player->awardStat(GenericStats::totalBlocksMined(), GenericStats::param_noArgs());	// 4J : WESTY : Added for other award.
+	fprintf(stderr, "[PD] after totalBlocksMined\n");
 	player->causeFoodExhaustion(FoodConstants::EXHAUSTION_MINE);
+	fprintf(stderr, "[PD] after causeFoodExhaustion\n");
 
 	if( id == Tile::treeTrunk_Id )
 		player->awardStat(GenericStats::mineWood(), GenericStats::param_noArgs());
 
-
+	fprintf(stderr, "[PD] after mineWood, isSilkTouchable=%d\n", (int)isSilkTouchable());
 	if (isSilkTouchable() && EnchantmentHelper::hasSilkTouch(player))
 	{
+		fprintf(stderr, "[PD] silk touch path\n");
 		shared_ptr<ItemInstance> item = getSilkTouchItemInstance(data);
 		if (item != NULL)
 		{
@@ -1240,9 +1245,13 @@ void Tile::playerDestroy(Level *level, shared_ptr<Player> player, int x, int y, 
 	}
 	else
 	{
+		fprintf(stderr, "[PD] normal drop path\n");
 		int playerBonusLevel = EnchantmentHelper::getDiggingLootBonus(player);
+		fprintf(stderr, "[PD] bonus=%d calling spawnResources\n", playerBonusLevel);
 		spawnResources(level, x, y, z, data, playerBonusLevel);
+		fprintf(stderr, "[PD] after spawnResources\n");
 	}
+	fprintf(stderr, "[PD] done\n");
 }
 
 bool Tile::isSilkTouchable()
