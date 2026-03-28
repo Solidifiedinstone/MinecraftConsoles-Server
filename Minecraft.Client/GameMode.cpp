@@ -122,8 +122,10 @@ shared_ptr<ItemInstance> GameMode::handleInventoryMouseClick(int containerId, in
 
 void GameMode::handleCloseInventory(int containerId, shared_ptr<Player> player)
 {
-    player->containerMenu->removed(player);
-	delete player->containerMenu;
+    if (player->containerMenu != player->inventoryMenu) {
+        player->containerMenu->removed(player);
+        delete player->containerMenu;
+    }
     player->containerMenu = player->inventoryMenu;
 }
 
