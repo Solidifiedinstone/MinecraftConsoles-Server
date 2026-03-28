@@ -257,6 +257,7 @@ void PlayerList::placeNewPlayer(Connection *connection, shared_ptr<ServerPlayer>
 	playerConnection->send( shared_ptr<SetTimePacket>( new SetTimePacket(level->getGameTime(), level->getDayTime(), level->getGameRules()->getBoolean(GameRules::RULE_DAYLIGHT)) ) );
 	fprintf(stderr, "[placeNewPlayer] after SetTimePacket\n");
 
+	fprintf(stderr, "[placeNewPlayer] player.get()=%p vptr=0x%llx\n", player.get(), player.get() ? *(unsigned long long*)player.get() : 0ULL);
 	AUTO_VAR(activeEffects, player->getActiveEffects());
 	fprintf(stderr, "[placeNewPlayer] activeEffects ptr=%p\n", activeEffects);
 	for(AUTO_VAR(it, activeEffects->begin()); it != activeEffects->end(); ++it)
