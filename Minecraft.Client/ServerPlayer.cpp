@@ -389,7 +389,7 @@ void ServerPlayer::doChunkSendingTick(bool dontDelayChunks)
 					(g_NetworkManager.GetHostPlayer()->GetSendQueueSizeMessages( NULL, true ) < 4 )&&
 #else
 					(connection->countDelayedPackets() < 4 )&&
-					(g_NetworkManager.GetHostPlayer()->GetSendQueueSizeMessages( NULL, true ) < 4 )&&
+					(g_NetworkManager.GetHostPlayer() == nullptr || g_NetworkManager.GetHostPlayer()->GetSendQueueSizeMessages( NULL, true ) < 4 )&&
 #endif 
 					//(tickCount - lastBrupSendTickCount) > (connection->getNetworkPlayer()->GetCurrentRtt()>>4) &&
 					!connection->done) )
