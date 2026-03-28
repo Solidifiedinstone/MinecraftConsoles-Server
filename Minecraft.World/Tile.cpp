@@ -911,10 +911,12 @@ void Tile::spawnResources(Level *level, int x, int y, int z, int data, float odd
 {
 	if (level->isClientSide) return;
 	int count = getResourceCountForLootBonus(playerBonusLevel, level->random);
+	fprintf(stderr, "[SPAWN] id=%d count=%d\n", id, count);
 	for (int i = 0; i < count; i++)
 	{
 		if (level->random->nextFloat() > odds) continue;
 		int type = getResource(data, level->random, playerBonusLevel);
+		fprintf(stderr, "[SPAWN] type=%d\n", type);
 		if (type <= 0) continue;
 
 		popResource(level, x, y, z, shared_ptr<ItemInstance>( new ItemInstance(type, 1, getSpawnResourcesAuxValue(data) ) ) );
@@ -923,7 +925,9 @@ void Tile::spawnResources(Level *level, int x, int y, int z, int data, float odd
 
 void Tile::popResource(Level *level, int x, int y, int z, shared_ptr<ItemInstance> itemInstance)
 {
-	if( level->isClientSide || !level->getGameRules()->getBoolean(GameRules::RULE_DOTILEDROPS) ) return;
+	bool doDrops = level->getGameRules()->getBoolean(GameRules::RULE_DOTILEDROPS);
+	fprintf(stderr, "[POP] isClientSide=%d doDrops=%d item=%d\n", (int)level->isClientSide, (int)doDrops, itemInstance ? itemInstance->id : -1);
+	if( level->isClientSide || !doDrops ) return;
 
 	float s = 0.7f;
 	double xo = level->random->nextFloat() * s + (1 - s) * 0.5;
@@ -931,7 +935,9 @@ void Tile::popResource(Level *level, int x, int y, int z, shared_ptr<ItemInstanc
 	double zo = level->random->nextFloat() * s + (1 - s) * 0.5;
 	shared_ptr<ItemEntity> item = shared_ptr<ItemEntity>( new ItemEntity(level, x + xo, y + yo, z + zo, itemInstance ) );
 	item->throwTime = 10;
+	fprintf(stderr, "[POP] calling addEntity id=%d\n", item->entityId);
 	level->addEntity(item);
+	fprintf(stderr, "[POP] addEntity done\n");
 }
 
 // Brought forward for TU7
