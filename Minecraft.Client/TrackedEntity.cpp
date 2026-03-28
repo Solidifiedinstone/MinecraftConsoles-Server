@@ -521,11 +521,15 @@ void TrackedEntity::updatePlayer(EntityTracker *tracker, shared_ptr<ServerPlayer
 
 	eVisibility visibility = this->isVisible(tracker, sp);
 
+	if(e->instanceof(eTYPE_ITEMENTITY))
+		fprintf(stderr, "[UPDATE-PLAYER] item=%d player=%ls visibility=%d alreadySeen=%d\n", e->entityId, sp->name.c_str(), (int)visibility, (int)(seenBy.find(sp)!=seenBy.end()));
+
 	if (	visibility == eVisibility_SeenAndVisible
 		&&	(seenBy.find(sp) == seenBy.end() || e->forcedLoading))
 	{
 		seenBy.insert(sp);
 		shared_ptr<Packet> packet = getAddEntityPacket();
+		fprintf(stderr, "[SEND-PKT] item=%d pkt=%d to player=%ls canReceive=%d\n", e->entityId, packet->getId(), sp->name.c_str(), 1);
 		sp->connection->send(packet);
 
 		xap = e->xd;
@@ -631,6 +635,8 @@ bool TrackedEntity::canBySeenBy(shared_ptr<ServerPlayer> player)
 
 void TrackedEntity::updatePlayers(EntityTracker *tracker, vector<shared_ptr<Player> > *players)
 {
+	if(e->instanceof(eTYPE_ITEMENTITY))
+		fprintf(stderr, "[UPDATE-PLAYERS] item entity id=%d playerCount=%d\n", e->entityId, (int)players->size());
 	for (unsigned int i = 0; i < players->size(); i++)
 	{
 		updatePlayer(tracker, dynamic_pointer_cast<ServerPlayer>( players->at(i) ) );
