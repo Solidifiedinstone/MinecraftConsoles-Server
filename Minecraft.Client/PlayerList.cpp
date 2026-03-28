@@ -97,8 +97,10 @@ void PlayerList::placeNewPlayer(Connection *connection, shared_ptr<ServerPlayer>
 
 	player->setLevel(server->getLevel(player->dimension));
 	fprintf(stderr, "[placeNewPlayer] after setLevel\n");
+	CHECK_PLAYER("after setLevel");
 	player->gameMode->setLevel((ServerLevel *)player->level);
 	fprintf(stderr, "[placeNewPlayer] after gameMode->setLevel\n");
+	CHECK_PLAYER("after gameModeSetLevel");
 
 	// Make sure these privileges are always turned off for the host player
 	INetworkPlayer *networkPlayer = connection->getSocket()->getPlayer();
@@ -123,6 +125,7 @@ void PlayerList::placeNewPlayer(Connection *connection, shared_ptr<ServerPlayer>
 	// Fix for #13150 - When a player loads/joins a game after saving/leaving in the nether, sometimes they are spawned on top of the nether and cannot mine down
 	validatePlayerSpawnPosition(player);
 	fprintf(stderr, "[placeNewPlayer] after validateSpawn\n");
+	CHECK_PLAYER("after validateSpawn");
 
 	//        logger.info(getName() + " logged in with entity id " + playerEntity.entityId + " at (" + playerEntity.x + ", " + playerEntity.y + ", " + playerEntity.z + ")");
 
@@ -150,9 +153,11 @@ void PlayerList::placeNewPlayer(Connection *connection, shared_ptr<ServerPlayer>
 	player->setCustomCape( packet->m_playerCapeId );
 
 	fprintf(stderr, "[placeNewPlayer] after playerIndex, about to create PlayerConnection\n");
+	CHECK_PLAYER("after playerIndex");
 	// 4J-JEV: Moved this here so we can send player-model texture and geometry data.
 	shared_ptr<PlayerConnection> playerConnection = shared_ptr<PlayerConnection>(new PlayerConnection(server, connection, player));
 	fprintf(stderr, "[placeNewPlayer] PlayerConnection created\n");
+	CHECK_PLAYER("after PlayerConn");
 	//player->connection = playerConnection;	// Used to be assigned in PlayerConnection ctor but moved out so we can use shared_ptr
 
 	if(newPlayer)
