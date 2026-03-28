@@ -174,6 +174,7 @@ void ServerPlayerGameMode::startDestroyBlock(int x, int y, int z, int face)
 
 void ServerPlayerGameMode::stopDestroyBlock(int x, int y, int z)
 {
+	fprintf(stderr, "[STOP-DESTROY] req=(%d,%d,%d) cur=(%d,%d,%d) match=%d\n", x,y,z, xDestroyBlock,yDestroyBlock,zDestroyBlock, (int)(x==xDestroyBlock&&y==yDestroyBlock&&z==zDestroyBlock));
 	if (x == xDestroyBlock && y == yDestroyBlock && z == zDestroyBlock)
 	{
 		//         int ticksSpentDestroying = gameTicks - destroyProgressStart;
@@ -285,6 +286,7 @@ bool ServerPlayerGameMode::destroyBlock(int x, int y, int z)
 	}
 
 	bool changed = superDestroyBlock(x, y, z);
+	fprintf(stderr, "[DESTROY] tile=%d changed=%d creative=%d adventure=%d\n", t, (int)changed, (int)isCreative(), (int)gameModeForPlayer->isAdventureRestricted());
 
 	if (isCreative())
 	{
@@ -296,11 +298,12 @@ bool ServerPlayerGameMode::destroyBlock(int x, int y, int z)
 		}
 		player->connection->send( tup );
 	}
-	else 
+	else
 	{
 		shared_ptr<ItemInstance> item = player->getSelectedItem();
 		// canDestroy (adventure mode item restriction) only applies in adventure mode; survival/creative always drop
 		bool canDestroy = !gameModeForPlayer->isAdventureRestricted() || player->canDestroy(Tile::tiles[t]);
+		fprintf(stderr, "[DESTROY] canDestroy=%d calling playerDestroy=%d\n", (int)canDestroy, (int)(changed && canDestroy));
 		if (item != NULL)
 		{
 			item->mineBlock(level, t, x, y, z, player);
