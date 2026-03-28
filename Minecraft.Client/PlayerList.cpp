@@ -88,6 +88,12 @@ void PlayerList::placeNewPlayer(Connection *connection, shared_ptr<ServerPlayer>
 } while(0)
 	CHECK_MENU("start");
 	CHECK_PLAYER("start");
+	{
+		net_minecraft_world_inventory::ContainerListener *_cl = player.get();
+		fprintf(stderr, "[layout] player=%p cl=%p name=%p textureUrl=%p textureUrl2=%p\n",
+			(void*)player.get(), (void*)_cl,
+			(void*)&player->name, (void*)&player->customTextureUrl, (void*)&player->customTextureUrl2);
+	}
 	CompoundTag *playerTag = load(player);
 	CHECK_MENU("after load");
 	CHECK_PLAYER("after load");
@@ -152,6 +158,7 @@ void PlayerList::placeNewPlayer(Connection *connection, shared_ptr<ServerPlayer>
 	CHECK_PLAYER("after setPlayerIndex");
 	player->setCustomSkin( packet->m_playerSkinId );
 	CHECK_PLAYER("after setCustomSkin");
+	fprintf(stderr, "[skinUrl] skinId=0x%08X url='%ls'\n", packet->m_playerSkinId, player->customTextureUrl.c_str());
 	player->setCustomCape( packet->m_playerCapeId );
 	CHECK_PLAYER("after setCustomCape");
 
