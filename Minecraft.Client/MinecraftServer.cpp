@@ -544,6 +544,13 @@ bool MinecraftServer::loadLevel(LevelStorageSource *storageSource, const wstring
 	}
 	app.SetGameHostOption( eGameHostOption_HasBeenInCreative, gameType == GameType::CREATIVE || levels[0]->getHasBeenInCreative() );
 	app.SetGameHostOption( eGameHostOption_Structures, levels[0]->isGenerateMapFeatures() );
+	// Dedicated server defaults: enable standard gameplay options
+	app.SetGameHostOption( eGameHostOption_DoTileDrops, 1 );
+	app.SetGameHostOption( eGameHostOption_DoMobLoot, 1 );
+	app.SetGameHostOption( eGameHostOption_DoMobSpawning, 1 );
+	app.SetGameHostOption( eGameHostOption_FireSpreads, 1 );
+	app.SetGameHostOption( eGameHostOption_NaturalRegeneration, 1 );
+	app.SetGameHostOption( eGameHostOption_DoDaylightCycle, 1 );
 
 	if( s_bServerHalted || !g_NetworkManager.IsInSession() ) return false;
 
