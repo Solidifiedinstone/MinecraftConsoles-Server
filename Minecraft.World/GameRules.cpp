@@ -25,6 +25,18 @@ GameRules::GameRules()
 	registerRule(RULE_COMMANDBLOCKOUTPUT, L"1");
 	registerRule(RULE_NATURAL_REGENERATION, L"1");
 	registerRule(RULE_DAYLIGHT, L"1");*/
+
+#ifdef _DEDICATED_SERVER
+	memset(m_rules, 0, sizeof(m_rules));
+	m_rules[RULE_DOFIRETICK]          = true;
+	m_rules[RULE_MOBGRIEFING]         = true;
+	m_rules[RULE_KEEPINVENTORY]       = false;
+	m_rules[RULE_DOMOBSPAWNING]       = true;
+	m_rules[RULE_DOMOBLOOT]           = true;
+	m_rules[RULE_DOTILEDROPS]         = true;
+	m_rules[RULE_NATURAL_REGENERATION]= true;
+	m_rules[RULE_DAYLIGHT]            = true;
+#endif
 }
 
 GameRules::~GameRules()
@@ -37,6 +49,11 @@ GameRules::~GameRules()
 
 bool GameRules::getBoolean(const int rule)
 {
+#ifdef _DEDICATED_SERVER
+	if (rule >= 0 && rule < 9) return m_rules[rule];
+	assert(0);
+	return false;
+#else
 	switch(rule)
 	{
 	case GameRules::RULE_DOFIRETICK:
@@ -59,7 +76,15 @@ bool GameRules::getBoolean(const int rule)
 		assert(0);
 		return false;
 	}
+#endif
 }
+
+#ifdef _DEDICATED_SERVER
+void GameRules::setBoolean(int rule, bool val)
+{
+	if (rule >= 0 && rule < 9) m_rules[rule] = val;
+}
+#endif
 
 /*
 void GameRules::registerRule(const wstring &name, const wstring &startValue)

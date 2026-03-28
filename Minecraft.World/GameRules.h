@@ -43,6 +43,13 @@ public:
 
 	bool getBoolean(const int rule);
 
+#ifdef _DEDICATED_SERVER
+	void setBoolean(int rule, bool val);
+private:
+	bool m_rules[9];
+public:
+#endif
+
 	// 4J: Removed unused functions
 	/*void set(const wstring &ruleName, const wstring &newValue);
 	void registerRule(const wstring &name, const wstring &startValue);
