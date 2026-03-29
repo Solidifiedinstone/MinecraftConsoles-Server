@@ -27,6 +27,7 @@
 #include "..\Minecraft.World\Pos.h"
 #include "..\Minecraft.World\System.h"
 #include "..\Minecraft.World\StringHelpers.h"
+#include "..\Minecraft.World\MobSpawner.h"
 #ifdef SPLIT_SAVES
 #include "..\Minecraft.World\ConsoleSaveFileSplit.h"
 #endif
@@ -1406,7 +1407,16 @@ void MinecraftServer::run(__int64 seed, void *lpParameter)
 				s_lastMobCountTime = currentTime;
 				int animals = levels[0]->countInstanceOf(eTYPE_ANIMALS_SPAWN_LIMIT_CHECK, false);
 				int monsters = levels[0]->countInstanceOf(eTYPE_MONSTER, false);
-				fprintf(stderr, "[MOBCOUNT] animals=%d monsters=%d\n", animals, monsters);
+				fprintf(stderr, "[MOBCOUNT] animals=%d monsters=%d | chunks=%d noSurf=%d solid=%d mat=%d okCalls=%d okPass=%d close=%d biomeNull=%d\n",
+					animals, monsters,
+					MobSpawner::dbg_creatureChunks, MobSpawner::dbg_scanNoSurface,
+					MobSpawner::dbg_solidFail, MobSpawner::dbg_materialFail,
+					MobSpawner::dbg_spawnOkCalls, MobSpawner::dbg_spawnOkPass,
+					MobSpawner::dbg_playerTooClose, MobSpawner::dbg_mobTypeNull);
+				MobSpawner::dbg_creatureChunks = 0; MobSpawner::dbg_scanNoSurface = 0;
+				MobSpawner::dbg_solidFail = 0;      MobSpawner::dbg_materialFail = 0;
+				MobSpawner::dbg_spawnOkCalls = 0;   MobSpawner::dbg_spawnOkPass = 0;
+				MobSpawner::dbg_playerTooClose = 0; MobSpawner::dbg_mobTypeNull = 0;
 			}
 		}
 #endif

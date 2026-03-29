@@ -20,6 +20,15 @@
 
 const int MobSpawner::MIN_SPAWN_DISTANCE = 24;
 
+int MobSpawner::dbg_creatureChunks = 0;
+int MobSpawner::dbg_scanNoSurface  = 0;
+int MobSpawner::dbg_solidFail      = 0;
+int MobSpawner::dbg_materialFail   = 0;
+int MobSpawner::dbg_spawnOkCalls   = 0;
+int MobSpawner::dbg_spawnOkPass    = 0;
+int MobSpawner::dbg_playerTooClose = 0;
+int MobSpawner::dbg_mobTypeNull    = 0;
+
 TilePos MobSpawner::getRandomPosWithin(Level *level, int cx, int cz)
 {
 	// 4J Stu - Added 1.2.3 but we don't need it as it was only used to access sections
@@ -246,19 +255,23 @@ const int MobSpawner::tick(ServerLevel *level, bool spawnEnemies, bool spawnFrie
 			   // For friendly land mobs, find the first air block above solid terrain.
 			   // Random y gives ~1/256 surface hit rate making animal spawns extremely rare.
 			   if (mobCategory->isFriendly() && mobCategory->getSpawnPositionMaterial() != Material::water) {
+				   dbg_creatureChunks++;
 				   int scanY = level->getHeight() - 1;
+				   bool scanFound = false;
 				   while (scanY > 1) {
 					   if (level->getTile(xStart, scanY, zStart) == 0 &&
 						   level->getTile(xStart, scanY - 1, zStart) != 0) {
 						   yStart = scanY;
+						   scanFound = true;
 						   break;
 					   }
 					   scanY--;
 				   }
+				   if (!scanFound) dbg_scanNoSurface++;
 			   }
 
-			   if (level->isSolidBlockingTile(xStart, yStart, zStart)) continue;
-			   if (level->getMaterial(xStart, yStart, zStart) != mobCategory->getSpawnPositionMaterial()) continue;
+			   if (level->isSolidBlockingTile(xStart, yStart, zStart)) { dbg_solidFail++; continue; }
+			   if (level->getMaterial(xStart, yStart, zStart) != mobCategory->getSpawnPositionMaterial()) { dbg_materialFail++; continue; }
 			   int clusterSize = 0;
 
 			   for (int dd = 0; dd < 3; dd++)
@@ -289,13 +302,16 @@ const int MobSpawner::tick(ServerLevel *level, bool spawnEnemies, bool spawnFrie
 					   // 4J - don't let this actually create/load a chunk that isn't here already - we'll let the normal updateDirtyChunks etc. processes do that, so it can happen on another thread
 					   if( !level->hasChunkAt( x, y, z ) ) continue;
 
+					   if (mobCategory->isFriendly()) dbg_spawnOkCalls++;
 					   if (isSpawnPositionOk(mobCategory, level, x, y, z))
 					   {
+						   if (mobCategory->isFriendly()) dbg_spawnOkPass++;
 						   float xx = x + 0.5f;
 						   float yy = (float) y;
 						   float zz = z + 0.5f;
 						   if (level->getNearestPlayer(xx, yy, zz, MIN_SPAWN_DISTANCE) != NULL)
 						   {
+							   if (mobCategory->isFriendly()) dbg_playerTooClose++;
 							   continue;
 						   }
 						   else
@@ -315,6 +331,7 @@ const int MobSpawner::tick(ServerLevel *level, bool spawnEnemies, bool spawnFrie
                                 currentMobType = level->getRandomMobSpawnAt(mobCategory, x, y, z);
                                 if (currentMobType == NULL)
 								{
+                                    if (mobCategory->isFriendly()) dbg_mobTypeNull++;
                                     break;
                                 }
                             }
