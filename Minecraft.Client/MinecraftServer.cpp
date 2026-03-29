@@ -1395,13 +1395,22 @@ void MinecraftServer::run(__int64 seed, void *lpParameter)
 #ifdef _DEDICATED_SERVER
 		{
 			static __int64 s_lastAutoSaveTime = 0;
+			static __int64 s_lastMobCountTime = 0;
 			__int64 currentTime = getCurrentTimeMillis();
 			if (s_lastAutoSaveTime == 0) s_lastAutoSaveTime = currentTime;
+			if (s_lastMobCountTime == 0) s_lastMobCountTime = currentTime;
 			if (currentTime - s_lastAutoSaveTime >= 300000LL)
 			{
 				s_lastAutoSaveTime = currentTime;
 				if (app.GetXuiServerAction(0) == eXuiServerAction_Idle)
 					app.SetXuiServerAction(0, eXuiServerAction_SaveGame);
+			}
+			if (currentTime - s_lastMobCountTime >= 30000LL)
+			{
+				s_lastMobCountTime = currentTime;
+				int animals = levels[0]->countInstanceOf(eTYPE_ANIMALS_SPAWN_LIMIT_CHECK, false);
+				int monsters = levels[0]->countInstanceOf(eTYPE_MONSTER, false);
+				fprintf(stderr, "[MOBCOUNT] animals=%d monsters=%d\n", animals, monsters);
 			}
 		}
 #endif
