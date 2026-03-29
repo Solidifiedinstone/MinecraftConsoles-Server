@@ -278,6 +278,14 @@ const int MobSpawner::tick(ServerLevel *level, bool spawnEnemies, bool spawnFrie
 					   z += level->random->nextInt(ss) - level->random->nextInt(ss);
 					   // int y = heightMap[x + z * w] + 1;
 
+					   // For friendly land mobs, recalculate y to match terrain at drifted x,z.
+					   // Without this, y stays at the original height and isSpawnPositionOk
+					   // fails when terrain differs at the new x,z (isTopSolidBlocking(x, y-1, z) false).
+					   if (mobCategory->isFriendly() && mobCategory->getSpawnPositionMaterial() != Material::water) {
+						   int surfY = level->getTopSolidBlock(x, z);
+						   if (surfY > 0) y = surfY;
+					   }
+
 					   // 4J - don't let this actually create/load a chunk that isn't here already - we'll let the normal updateDirtyChunks etc. processes do that, so it can happen on another thread
 					   if( !level->hasChunkAt( x, y, z ) ) continue;
 
