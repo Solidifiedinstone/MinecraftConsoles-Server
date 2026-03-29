@@ -313,7 +313,20 @@ void ServerLevel::tick()
 Biome::MobSpawnerData *ServerLevel::getRandomMobSpawnAt(MobCategory *mobCategory, int x, int y, int z)
 {
 	vector<Biome::MobSpawnerData *> *mobList = getChunkSource()->getMobsAt(mobCategory, x, y, z);
-	if (mobList == NULL || mobList->empty()) return NULL;
+	if (mobList == NULL || mobList->empty())
+	{
+		if (mobCategory == MobCategory::creature)
+		{
+			static int s_creatureNullCount = 0;
+			if ((++s_creatureNullCount % 200) == 0)
+			{
+				Biome *biome = getBiome(x, z);
+				fprintf(stderr, "[ANIMAL_SPAWN] getRandomMobSpawnAt creature NULL: biome=%ls pos=(%d,%d)\n",
+					biome ? biome->m_name.c_str() : L"null", x, z);
+			}
+		}
+		return NULL;
+	}
 
 	return (Biome::MobSpawnerData *) WeighedRandom::getRandomItem(random, (vector<WeighedRandomItem *> *)mobList);
 }

@@ -284,7 +284,20 @@ bool Animal::canSpawn()
 	int xt = Mth::floor(x);
 	int yt = Mth::floor(bb->y0);
 	int zt = Mth::floor(z);
-	return level->getTile(xt, yt - 1, zt) == Tile::grass_Id && level->getDaytimeRawBrightness(xt, yt, zt) > 8 && AgableMob::canSpawn();
+	int tileBelow = level->getTile(xt, yt - 1, zt);
+	int brightness = level->getDaytimeRawBrightness(xt, yt, zt);
+	bool agableOk = AgableMob::canSpawn();
+
+	static int s_callCount = 0;
+	if ((++s_callCount % 50) == 0)
+	{
+		fprintf(stderr, "[ANIMAL_SPAWN] canSpawn: tile_below=%d(grass=%d) bright=%d agable=%d pos=(%d,%d,%d)\n",
+			tileBelow, Tile::grass_Id, brightness, agableOk ? 1 : 0, xt, yt, zt);
+	}
+
+	// Accept grass or any solid top surface with sufficient brightness
+	bool surfaceOk = (tileBelow == Tile::grass_Id) || level->isTopSolidBlocking(xt, yt - 1, zt);
+	return surfaceOk && brightness > 4 && agableOk;
 }
 
 int Animal::getAmbientSoundInterval()
