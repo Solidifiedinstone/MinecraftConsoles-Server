@@ -219,6 +219,12 @@ const int MobSpawner::tick(ServerLevel *level, bool spawnEnemies, bool spawnFrie
 			continue;
 		}
 
+		if (mobCategory == MobCategory::creature) {
+			static int s_ca = 0;
+			if (++s_ca % 5 == 1)
+				fprintf(stderr, "[CREATURE] attempt=%d count=%d chunks=%zu spawnP=%d\n", s_ca, categoryCount, chunksToPoll.size(), (int)spawnPersistent);
+		}
+
 #ifdef __PSVITA__
 		for( int i = 0;i < chunksToPoll.end();i += 1 )
 		{
@@ -257,6 +263,11 @@ const int MobSpawner::tick(ServerLevel *level, bool spawnEnemies, bool spawnFrie
 				   }
 			   }
 
+			   if (mobCategory == MobCategory::creature) {
+				   static int s_cs = 0;
+				   if (++s_cs % 20 == 1)
+					   fprintf(stderr, "[CREATURE] scan y=%d tile=%d mat=%p air=%p pos=(%d,%d,%d)\n", yStart, level->getTile(xStart,yStart,zStart), (void*)level->getMaterial(xStart,yStart,zStart), (void*)Material::air, xStart,yStart,zStart);
+			   }
 			   if (level->isSolidBlockingTile(xStart, yStart, zStart)) continue;
 			   if (level->getMaterial(xStart, yStart, zStart) != mobCategory->getSpawnPositionMaterial()) continue;
 			   int clusterSize = 0;
