@@ -113,11 +113,13 @@ void FallingTile::tick()
 			{
 				level->removeTile(xt, yt, zt);
 			}
-			else
+			else if (level->getTile(xt, yt, zt) != 0)
 			{
+				// Block was replaced by something other than air/this tile — abort.
 				remove();
 				return;
 			}
+			// If block is already air (removed by HeavyTile::checkSlide), continue falling.
 		}
 
 		if (onGround)

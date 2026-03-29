@@ -60,7 +60,11 @@ void HeavyTile::checkSlide(Level *level, int x, int y, int z)
 				return;
 			}
 
-			shared_ptr<FallingTile> e = shared_ptr<FallingTile>( new FallingTile(level, x + 0.5f, y + 0.5f, z + 0.5f, id, level->getData(x, y, z)) );
+			// Remove the block before adding the entity so clients receive the removal
+			// packet before the entity packet, avoiding ghost block desync.
+			int savedData = level->getData(x, y, z);
+			level->removeTile(x, y, z);
+			shared_ptr<FallingTile> e = shared_ptr<FallingTile>( new FallingTile(level, x + 0.5f, y + 0.5f, z + 0.5f, id, savedData) );
 			falling(e);
 			level->addEntity(e);
 		}
