@@ -26,6 +26,12 @@ template <class T> T _fromString(const std::wstring& s)
 	stream >> t;
 	return t;
 }
+template <> inline bool _fromString<bool>(const std::wstring& s)
+{
+	// Handle "true"/"false" strings in addition to "1"/"0"
+	if (equalsIgnoreCase(s, L"true") || s == L"1") return true;
+	return false;
+}
 template <class T> T _fromHEXString(const std::wstring& s)
 {
 	std::wistringstream stream (s);
