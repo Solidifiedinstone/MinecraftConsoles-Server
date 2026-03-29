@@ -602,7 +602,11 @@ public:
     CDLCManager m_dlcManager;
     DWORD m_hostOptions[eGameHostOption_Max];
 
-    CMinecraftApp() { memset(m_hostOptions, 0, sizeof(m_hostOptions)); }
+    CMinecraftApp() {
+        memset(m_hostOptions, 0, sizeof(m_hostOptions));
+        memset(m_serverActions, 0, sizeof(m_serverActions));
+        memset(m_serverActionParams, 0, sizeof(m_serverActionParams));
+    }
 
     // 2-arg version: unpack specific option from a packed settings DWORD
     DWORD GetGameHostOption(DWORD packed, eGameHostOption opt) const {
@@ -660,6 +664,9 @@ public:
     void EnterSaveNotificationSection() {}
     void LeaveSaveNotificationSection() {}
 
+    eXuiServerAction m_serverActions[XUSER_MAX_COUNT];
+    LPVOID m_serverActionParams[XUSER_MAX_COUNT];
+
     // Methods called by server-side .cpp files
     LevelRuleset* getGameRuleDefinitions() { return NULL; }
     bool IsFileInMemoryTextures(const wstring&) { return false; }
@@ -672,9 +679,19 @@ public:
     void SetGameSettingsDebugMask(int, unsigned int) {}
     wstring GetString(int) { return L""; }
     bool GetTerrainFeaturePosition(_eTerrainFeatureType, int* px, int* pz) { return false; }
-    eXuiServerAction GetXuiServerAction(int) { return eXuiServerAction_Idle; }
-    LPVOID GetXuiServerActionParam(int) { return NULL; }
-    void SetXuiServerAction(int, eXuiServerAction) {}
+    eXuiServerAction GetXuiServerAction(int pad) {
+        if (pad >= 0 && pad < XUSER_MAX_COUNT) return m_serverActions[pad];
+        return eXuiServerAction_Idle;
+    }
+    LPVOID GetXuiServerActionParam(int pad) {
+        if (pad >= 0 && pad < XUSER_MAX_COUNT) return m_serverActionParams[pad];
+        return NULL;
+    }
+    void SetXuiServerAction(int pad, eXuiServerAction action) {
+        if (pad >= 0 && pad < XUSER_MAX_COUNT) {
+            m_serverActions[pad] = action;
+        }
+    }
     bool isTutorial() { return false; }
     int GetGameNewWorldSize() { return 0; }
     bool GetGameNewWorldSizeUseMoat() { return false; }

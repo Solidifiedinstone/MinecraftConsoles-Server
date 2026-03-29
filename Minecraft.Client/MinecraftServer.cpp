@@ -468,7 +468,11 @@ bool MinecraftServer::loadLevel(LevelStorageSource *storageSource, const wstring
 		}
 		else
 		{
+#ifdef _DEDICATED_SERVER
+			newFormatSave = new ConsoleSaveFileSplit( name );
+#else
 			newFormatSave = new ConsoleSaveFileSplit( L"" );
+#endif
 		}
 
 		storage = shared_ptr<McRegionLevelStorage>(new McRegionLevelStorage(newFormatSave, File(L"."), name, true));
@@ -1387,7 +1391,22 @@ void MinecraftServer::run(__int64 seed, void *lpParameter)
 				}
 			}
 
-			// Process delayed actions			
+			// Dedicated server autosave every 5 minutes
+#ifdef _DEDICATED_SERVER
+		{
+			static __int64 s_lastAutoSaveTime = 0;
+			__int64 currentTime = getCurrentTimeMillis();
+			if (s_lastAutoSaveTime == 0) s_lastAutoSaveTime = currentTime;
+			if (currentTime - s_lastAutoSaveTime >= 300000LL)
+			{
+				s_lastAutoSaveTime = currentTime;
+				if (app.GetXuiServerAction(0) == eXuiServerAction_Idle)
+					app.SetXuiServerAction(0, eXuiServerAction_SaveGame);
+			}
+		}
+#endif
+
+			// Process delayed actions
 			eXuiServerAction eAction;
 			LPVOID param;
 			for(int i=0;i<XUSER_MAX_COUNT;i++)

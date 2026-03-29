@@ -140,4 +140,11 @@ public:
 
 	virtual void ConvertRegionFile(File sourceFile);
 	virtual void ConvertToLocalPlatform();
+
+#ifdef _DEDICATED_SERVER
+private:
+	void DedicatedServerSave();
+	bool DedicatedServerLoad(const wstring& dir);
+public:
+#endif
 };

@@ -575,9 +575,18 @@ void ConsoleSaveFileSplit::_init(const wstring &fileName, LPVOID pvSaveData, DWO
 
 	}
 	else
-	{	
-		// Clear the first 8 bytes that reference the header
-		header.WriteHeader( pvSaveMem );
+	{
+#ifdef _DEDICATED_SERVER
+		if (!fileName.empty() && DedicatedServerLoad(fileName))
+		{
+			// Loaded from disk successfully
+		}
+		else
+#endif
+		{
+			// Clear the first 8 bytes that reference the header
+			header.WriteHeader( pvSaveMem );
+		}
 	}
 }
 
@@ -1452,6 +1461,14 @@ void ConsoleSaveFileSplit::Flush(bool autosave, bool updateThumbnail)
 			}
 		}
 #endif
+
+#ifdef _DEDICATED_SERVER
+		if (!m_fileName.empty())
+		{
+			DedicatedServerSave();
+		}
+#endif
+
 		ReleaseSaveAccess();
 	}
 }
@@ -1534,6 +1551,144 @@ void ConsoleSaveFileSplit::DebugFlushToFile(void *compressedData /*= NULL*/, uns
 	delete[] fileName;
 
 	ReleaseSaveAccess();
+}
+#endif
+
+#ifdef _DEDICATED_SERVER
+void ConsoleSaveFileSplit::DedicatedServerSave()
+{
+	// Write pvSaveMem (main save: level.dat, player data, etc.) to world dir
+	// Write each region file (chunk data) to world dir/regions/
+	// Called from within Flush() which already holds the save lock.
+
+	unsigned int mainFileSize = header.GetFileSize();
+	if (mainFileSize == 0) return;
+
+	wstring worldDir = m_fileName;
+	CreateDirectoryW(worldDir.c_str(), NULL);
+
+	// Write main save file
+	wstring mainPath = worldDir + L"\\main.lce";
+	HANDLE hFile = CreateFileW(mainPath.c_str(), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (hFile != INVALID_HANDLE_VALUE)
+	{
+		DWORD written = 0;
+		WriteFile(hFile, pvSaveMem, mainFileSize, &written, NULL);
+		CloseHandle(hFile);
+	}
+
+	// Write region files
+	wstring regionDir = worldDir + L"\\regions";
+	CreateDirectoryW(regionDir.c_str(), NULL);
+
+	for (AUTO_VAR(it, regionFiles.begin()); it != regionFiles.end(); ++it)
+	{
+		RegionFileReference *region = it->second;
+		if (region->data != NULL && region->fileEntry->data.length > 0)
+		{
+			wchar_t regionName[32];
+			swprintf(regionName, 32, L"\\%08X.bin", it->first);
+			wstring regionPath = regionDir + wstring(regionName);
+			HANDLE hRegion = CreateFileW(regionPath.c_str(), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+			if (hRegion != INVALID_HANDLE_VALUE)
+			{
+				DWORD written = 0;
+				WriteFile(hRegion, region->data, region->fileEntry->data.length, &written, NULL);
+				CloseHandle(hRegion);
+			}
+		}
+	}
+}
+
+bool ConsoleSaveFileSplit::DedicatedServerLoad(const wstring& dir)
+{
+	// Load main save file
+	wstring mainPath = dir + L"\\main.lce";
+	HANDLE hFile = CreateFileW(mainPath.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (hFile == INVALID_HANDLE_VALUE)
+		return false;
+
+	DWORD fileSize = GetFileSize(hFile, NULL);
+	if (fileSize == 0 || fileSize == INVALID_FILE_SIZE)
+	{
+		CloseHandle(hFile);
+		return false;
+	}
+
+	// Grow virtual memory if needed
+	DWORD currentHeapSize = pagesCommitted * CSF_PAGE_SIZE;
+	if (fileSize > currentHeapSize)
+	{
+		unsigned int pagesRequired = (fileSize + (CSF_PAGE_SIZE - 1)) / CSF_PAGE_SIZE;
+		void *pvRet = VirtualAlloc(pvHeap, pagesRequired * CSF_PAGE_SIZE, COMMIT_ALLOCATION, PAGE_READWRITE);
+		if (pvRet == NULL)
+		{
+			CloseHandle(hFile);
+			return false;
+		}
+		pagesCommitted = pagesRequired;
+	}
+
+	DWORD bytesRead = 0;
+	BOOL ok = ReadFile(hFile, pvSaveMem, fileSize, &bytesRead, NULL);
+	CloseHandle(hFile);
+
+	if (!ok || bytesRead != fileSize)
+	{
+		ZeroMemory(pvSaveMem, fileSize);
+		header.WriteHeader(pvSaveMem);
+		return false;
+	}
+
+	header.ReadHeader(pvSaveMem, SAVE_FILE_PLATFORM_LOCAL);
+
+	// Load region files
+	wstring regionDir = dir + L"\\regions";
+	wstring searchPath = regionDir + L"\\*.bin";
+
+	WIN32_FIND_DATAW findData;
+	HANDLE hFind = FindFirstFileW(searchPath.c_str(), &findData);
+	if (hFind != INVALID_HANDLE_VALUE)
+	{
+		int regionIndex_int = 0;
+		do
+		{
+			// Parse regionIndex from hex filename (e.g. "0000001A.bin")
+			unsigned int regionIndex = 0;
+			swscanf(findData.cFileName, L"%08X.bin", &regionIndex);
+
+			wstring regionPath = regionDir + L"\\" + wstring(findData.cFileName);
+			HANDLE hRegion = CreateFileW(regionPath.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+			if (hRegion != INVALID_HANDLE_VALUE)
+			{
+				DWORD regionSize = GetFileSize(hRegion, NULL);
+				if (regionSize > 0 && regionSize != INVALID_FILE_SIZE)
+				{
+					unsigned char *regionData = (unsigned char *)malloc(regionSize);
+					if (regionData != NULL)
+					{
+						DWORD regionRead = 0;
+						if (ReadFile(hRegion, regionData, regionSize, &regionRead, NULL) && regionRead == regionSize)
+						{
+							RegionFileReference *ref = new RegionFileReference(regionIndex_int, regionIndex);
+							ref->data = regionData;
+							ref->fileEntry->data.length = regionSize;
+							regionFiles[regionIndex] = ref;
+							regionIndex_int++;
+						}
+						else
+						{
+							free(regionData);
+						}
+					}
+				}
+				CloseHandle(hRegion);
+			}
+		} while (FindNextFileW(hFind, &findData));
+		FindClose(hFind);
+	}
+
+	return true;
 }
 #endif
 
