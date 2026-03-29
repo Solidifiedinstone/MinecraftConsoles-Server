@@ -246,7 +246,7 @@ const int MobSpawner::tick(ServerLevel *level, bool spawnEnemies, bool spawnFrie
 			   // For friendly land mob categories, use surface height instead of random y.
 			   // Random y gives ~1/256 probability of landing at the surface, making animal spawns extremely rare.
 			   if (mobCategory->isFriendly() && mobCategory->getSpawnPositionMaterial() != Material::water) {
-				   yStart = level->n(xStart, zStart) + 1;
+				   yStart = level->getTopSolidBlock(xStart, zStart);
 			   }
 
 			   if (level->isSolidBlockingTile(xStart, yStart, zStart)) continue;
