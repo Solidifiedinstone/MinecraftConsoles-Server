@@ -129,6 +129,7 @@ public:
 	void sendParticles(const wstring &name, double x, double y, double z, int count, double xDist, double yDist, double zDist, double speed);
 
 	void queueSendTileUpdate(int x, int y, int z); // 4J Added
+	void sendImmediateTileUpdate(int x, int y, int z);
 private:
 	void runQueuedSendTileUpdates();// 4J Added
 

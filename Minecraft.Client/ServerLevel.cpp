@@ -1324,6 +1324,11 @@ void ServerLevel::runQueuedSendTileUpdates()
 	LeaveCriticalSection(&m_csQueueSendTileUpdates);
 }
 
+void ServerLevel::sendImmediateTileUpdate(int x, int y, int z)
+{
+	sendTileUpdated(x, y, z);
+}
+
 // 4J - added special versions of addEntity and extra processing on entity removed and added so we can limit the number of itementities created
 bool ServerLevel::addEntity(shared_ptr<Entity> e)
 {
