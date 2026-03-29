@@ -243,6 +243,21 @@ const int MobSpawner::tick(ServerLevel *level, bool spawnEnemies, bool spawnFrie
 			   int yStart = start.y;
 			   int zStart = start.z;
 
+			   // For friendly land mobs, scan down from the top to find a y where
+			   // isTopSolidBlocking(y-1) is true and y itself is air — matching exactly
+			   // what isSpawnPositionOk requires. Random y gives ~1/256 hit rate.
+			   if (mobCategory->isFriendly() && mobCategory->getSpawnPositionMaterial() != Material::water) {
+				   int scanY = level->getHeight() - 1;
+				   while (scanY > 0) {
+					   if (!level->isSolidBlockingTile(xStart, scanY, zStart) &&
+						   level->isTopSolidBlocking(xStart, scanY - 1, zStart)) {
+						   yStart = scanY;
+						   break;
+					   }
+					   scanY--;
+				   }
+			   }
+
 			   if (level->isSolidBlockingTile(xStart, yStart, zStart)) continue;
 			   if (level->getMaterial(xStart, yStart, zStart) != mobCategory->getSpawnPositionMaterial()) continue;
 			   int clusterSize = 0;
