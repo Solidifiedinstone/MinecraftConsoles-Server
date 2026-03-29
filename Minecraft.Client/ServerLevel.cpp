@@ -1327,6 +1327,7 @@ void ServerLevel::runQueuedSendTileUpdates()
 
 void ServerLevel::sendImmediateTileUpdate(int x, int y, int z)
 {
+	if (chunkMap == NULL) return;
 	chunkMap->broadcastTileUpdate(shared_ptr<Packet>(new TileUpdatePacket(x, y, z, this)), x, y, z);
 }
 
