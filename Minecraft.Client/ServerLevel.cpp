@@ -18,6 +18,7 @@
 #include "..\Minecraft.World\net.minecraft.world.level.h"
 #include "..\Minecraft.World\net.minecraft.world.level.biome.h"
 #include "..\Minecraft.World\net.minecraft.world.level.chunk.h"
+#include "..\Minecraft.World\TileUpdatePacket.h"
 #include "..\Minecraft.World\net.minecraft.world.level.dimension.h"
 #include "..\Minecraft.World\net.minecraft.world.level.levelgen.feature.h"
 #include "..\Minecraft.World\net.minecraft.world.level.storage.h"
@@ -1326,7 +1327,7 @@ void ServerLevel::runQueuedSendTileUpdates()
 
 void ServerLevel::sendImmediateTileUpdate(int x, int y, int z)
 {
-	sendTileUpdated(x, y, z);
+	chunkMap->broadcastTileUpdate(shared_ptr<Packet>(new TileUpdatePacket(x, y, z, this)), x, y, z);
 }
 
 // 4J - added special versions of addEntity and extra processing on entity removed and added so we can limit the number of itementities created
