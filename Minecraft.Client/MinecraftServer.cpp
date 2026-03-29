@@ -601,10 +601,6 @@ bool MinecraftServer::loadLevel(LevelStorageSource *storageSource, const wstring
 	app.SetGameHostOption( eGameHostOption_FireSpreads, 1 );
 	app.SetGameHostOption( eGameHostOption_NaturalRegeneration, 1 );
 	app.SetGameHostOption( eGameHostOption_DoDaylightCycle, 1 );
-	fprintf(stderr, "[INIT] DoTileDrops=%d DoMobLoot=%d DoMobSpawning=%d\n",
-		(int)app.GetGameHostOption(eGameHostOption_DoTileDrops),
-		(int)app.GetGameHostOption(eGameHostOption_DoMobLoot),
-		(int)app.GetGameHostOption(eGameHostOption_DoMobSpawning));
 
 	__int64 lastTime = System::currentTimeMillis();
 #ifdef _LARGE_WORLDS

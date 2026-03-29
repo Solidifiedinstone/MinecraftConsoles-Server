@@ -911,12 +911,10 @@ void Tile::spawnResources(Level *level, int x, int y, int z, int data, float odd
 {
 	if (level->isClientSide) return;
 	int count = getResourceCountForLootBonus(playerBonusLevel, level->random);
-	fprintf(stderr, "[SPAWN] id=%d count=%d\n", id, count);
 	for (int i = 0; i < count; i++)
 	{
 		if (level->random->nextFloat() > odds) continue;
 		int type = getResource(data, level->random, playerBonusLevel);
-		fprintf(stderr, "[SPAWN] type=%d\n", type);
 		if (type <= 0) continue;
 
 		popResource(level, x, y, z, shared_ptr<ItemInstance>( new ItemInstance(type, 1, getSpawnResourcesAuxValue(data) ) ) );
@@ -926,7 +924,6 @@ void Tile::spawnResources(Level *level, int x, int y, int z, int data, float odd
 void Tile::popResource(Level *level, int x, int y, int z, shared_ptr<ItemInstance> itemInstance)
 {
 	bool doDrops = level->getGameRules()->getBoolean(GameRules::RULE_DOTILEDROPS);
-	fprintf(stderr, "[POP] isClientSide=%d doDrops=%d item=%d\n", (int)level->isClientSide, (int)doDrops, itemInstance ? itemInstance->id : -1);
 	if( level->isClientSide || !doDrops ) return;
 
 	float s = 0.7f;
@@ -935,9 +932,7 @@ void Tile::popResource(Level *level, int x, int y, int z, shared_ptr<ItemInstanc
 	double zo = level->random->nextFloat() * s + (1 - s) * 0.5;
 	shared_ptr<ItemEntity> item = shared_ptr<ItemEntity>( new ItemEntity(level, x + xo, y + yo, z + zo, itemInstance ) );
 	item->throwTime = 10;
-	fprintf(stderr, "[POP] calling addEntity id=%d\n", item->entityId);
 	level->addEntity(item);
-	fprintf(stderr, "[POP] addEntity done\n");
 }
 
 // Brought forward for TU7
@@ -1197,7 +1192,6 @@ void Tile::updateDefaultShape()
 
 void Tile::playerDestroy(Level *level, shared_ptr<Player> player, int x, int y, int z, int data)
 {
-	fprintf(stderr, "[PD] start id=%d\n", id);
 	// 4J Stu - Special case - only record a crop destroy if is fully grown
 	if( id==Tile::wheat_Id )
 	{
@@ -1230,19 +1224,14 @@ void Tile::playerDestroy(Level *level, shared_ptr<Player> player, int x, int y, 
 			GenericStats::param_blocksMined(id,data,1)
 			);
 	}
-	fprintf(stderr, "[PD] after blocksMined\n");
 	player->awardStat(GenericStats::totalBlocksMined(), GenericStats::param_noArgs());	// 4J : WESTY : Added for other award.
-	fprintf(stderr, "[PD] after totalBlocksMined\n");
 	player->causeFoodExhaustion(FoodConstants::EXHAUSTION_MINE);
-	fprintf(stderr, "[PD] after causeFoodExhaustion\n");
 
 	if( id == Tile::treeTrunk_Id )
 		player->awardStat(GenericStats::mineWood(), GenericStats::param_noArgs());
 
-	fprintf(stderr, "[PD] after mineWood, isSilkTouchable=%d\n", (int)isSilkTouchable());
 	if (isSilkTouchable() && EnchantmentHelper::hasSilkTouch(player))
 	{
-		fprintf(stderr, "[PD] silk touch path\n");
 		shared_ptr<ItemInstance> item = getSilkTouchItemInstance(data);
 		if (item != NULL)
 		{
@@ -1251,13 +1240,9 @@ void Tile::playerDestroy(Level *level, shared_ptr<Player> player, int x, int y, 
 	}
 	else
 	{
-		fprintf(stderr, "[PD] normal drop path\n");
 		int playerBonusLevel = EnchantmentHelper::getDiggingLootBonus(player);
-		fprintf(stderr, "[PD] bonus=%d calling spawnResources\n", playerBonusLevel);
 		spawnResources(level, x, y, z, data, playerBonusLevel);
-		fprintf(stderr, "[PD] after spawnResources\n");
 	}
-	fprintf(stderr, "[PD] done\n");
 }
 
 bool Tile::isSilkTouchable()
