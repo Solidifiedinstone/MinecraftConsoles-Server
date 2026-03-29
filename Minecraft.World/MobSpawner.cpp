@@ -243,15 +243,8 @@ const int MobSpawner::tick(ServerLevel *level, bool spawnEnemies, bool spawnFrie
 			   int yStart = start.y;
 			   int zStart = start.z;
 
-			   // For friendly land mob categories, use surface height instead of random y.
-			   // Random y gives ~1/256 probability of landing at the surface, making animal spawns extremely rare.
-			   if (mobCategory->isFriendly() && mobCategory->getSpawnPositionMaterial() != Material::water) {
-				   yStart = level->getTopSolidBlock(xStart, zStart);
-				   fprintf(stderr, "[SPAWN-DBG] friendly chunk=(%d,%d) surface y=%d pos=(%d,%d,%d)\n", cp->x, cp->z, yStart, xStart, yStart, zStart);
-			   }
-
-			   if (level->isSolidBlockingTile(xStart, yStart, zStart)) { fprintf(stderr, "[SPAWN-DBG] SKIP solid blocking at y=%d\n", yStart); continue; }
-			   if (level->getMaterial(xStart, yStart, zStart) != mobCategory->getSpawnPositionMaterial()) { fprintf(stderr, "[SPAWN-DBG] SKIP material mismatch at y=%d mat=%p want=%p\n", yStart, (void*)level->getMaterial(xStart,yStart,zStart), (void*)mobCategory->getSpawnPositionMaterial()); continue; }
+			   if (level->isSolidBlockingTile(xStart, yStart, zStart)) continue;
+			   if (level->getMaterial(xStart, yStart, zStart) != mobCategory->getSpawnPositionMaterial()) continue;
 			   int clusterSize = 0;
 
 			   for (int dd = 0; dd < 3; dd++)
@@ -431,11 +424,9 @@ bool MobSpawner::isSpawnPositionOk(MobCategory *category, Level *level, int x, i
 	}
 	else
 	{
-		if (!level->isTopSolidBlocking(x, y - 1, z)) { fprintf(stderr, "[SPAWN-DBG] isSpawnOk FAIL topSolid at (%d,%d,%d)\n", x, y, z); return false; }
+		if (!level->isTopSolidBlocking(x, y - 1, z)) return false;
 		int tt = level->getTile(x, y - 1, z);
-		bool ok = tt != Tile::unbreakable_Id && !level->isSolidBlockingTile(x, y, z) && !level->getMaterial(x, y, z)->isLiquid() && !level->isSolidBlockingTile(x, y + 1, z);
-		if (!ok) fprintf(stderr, "[SPAWN-DBG] isSpawnOk FAIL tile=%d solid=%d liq=%d solid+1=%d at (%d,%d,%d)\n", tt, level->isSolidBlockingTile(x,y,z), level->getMaterial(x,y,z)->isLiquid(), level->isSolidBlockingTile(x,y+1,z), x, y, z);
-		return ok;
+		return tt != Tile::unbreakable_Id && !level->isSolidBlockingTile(x, y, z) && !level->getMaterial(x, y, z)->isLiquid() && !level->isSolidBlockingTile(x, y + 1, z);
 	}
 				}
 
