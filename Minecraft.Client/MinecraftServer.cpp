@@ -1636,9 +1636,6 @@ void MinecraftServer::run(__int64 seed, void *lpParameter)
 
 			Sleep(1);
 		}
-#ifdef _DEDICATED_SERVER
-	fprintf(stderr, "[LOOP_EXIT] running=%d s_bServerHalted=%d\n", (int)running, (int)s_bServerHalted);
-#endif
 	}
 	//else
 	//{
