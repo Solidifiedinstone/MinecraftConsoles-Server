@@ -244,7 +244,13 @@ void PlayerChunkMap::PlayerChunk::broadcast(shared_ptr<Packet> packet)
 		// for send the first BlockRegionUpdatePacket for this chunk to that player/players system. Therefore there is no need to
 		// send tile updates or other updates until that has been sent
 		int flagIndex = ServerPlayer::getFlagIndexForChunk(pos, parent->dimension);
+#ifdef _DEDICATED_SERVER
+		// On the dedicated server, SystemFlagGet always returns false (stub). All updates go
+		// over TCP, so we trust seenChunks alone to gate tile updates to players tracking this chunk.
+        if (player->seenChunks.find(pos) != player->seenChunks.end())
+#else
         if (player->seenChunks.find(pos) != player->seenChunks.end() && (player->connection->isLocal() || g_NetworkManager.SystemFlagGet(player->connection->getNetworkPlayer(),flagIndex) ))
+#endif
 		{
             player->connection->send(packet);
 			sentTo.push_back(player);
@@ -273,7 +279,9 @@ void PlayerChunkMap::PlayerChunk::broadcast(shared_ptr<Packet> packet)
 		// Don't worry about this player if they haven't had this chunk yet (this flag will be the
 		// same for all players on the same system)
 		int flagIndex = ServerPlayer::getFlagIndexForChunk(pos,parent->dimension);
+#ifndef _DEDICATED_SERVER
 		if(!g_NetworkManager.SystemFlagGet(player->connection->getNetworkPlayer(),flagIndex)) continue;
+#endif
 
 		// From here on the same rules as in the loop above - don't send it if we've already sent to the same system
 		bool dontSend = false;
