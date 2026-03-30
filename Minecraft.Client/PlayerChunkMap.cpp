@@ -214,6 +214,17 @@ void PlayerChunkMap::PlayerChunk::broadcast(shared_ptr<Packet> packet)
 		// by only sending to the primary player on each machine. This was causing trouble for split screen
 		// as updates were only coming in for the region round this one player. Now these packets can be sent to any
 		// player, but we try to restrict the network impact this has by not resending to the one machine
+#ifdef _DEDICATED_SERVER
+		// On dedicated server, getNetworkPlayer() returns NULL for all TCP connections (stub).
+		// IsSameSystem dedup is for split-screen only — skip it. Use pointer identity to avoid
+		// double-sends if both loops cover the same player.
+		bool dontSend = false;
+		for(unsigned int j = 0; j < sentTo.size(); j++)
+		{
+			if(sentTo[j] == player) { dontSend = true; break; }
+		}
+		if(dontSend) continue;
+#else
 		bool dontSend = false;
 		if( sentTo.size() )
 		{
@@ -224,7 +235,7 @@ void PlayerChunkMap::PlayerChunk::broadcast(shared_ptr<Packet> packet)
 			}
 			else
 			{
-				for(unsigned int j = 0; j < sentTo.size(); j++ )	
+				for(unsigned int j = 0; j < sentTo.size(); j++ )
 				{
 					shared_ptr<ServerPlayer> player2 = sentTo[j];
 					INetworkPlayer *otherPlayer = player2->connection->getNetworkPlayer();
@@ -239,6 +250,7 @@ void PlayerChunkMap::PlayerChunk::broadcast(shared_ptr<Packet> packet)
 		{
 			continue;
 		}
+#endif
 
 		// 4J Changed to get the flag index for the player before we send a packet. This flag is updated when we queue
 		// for send the first BlockRegionUpdatePacket for this chunk to that player/players system. Therefore there is no need to
@@ -284,6 +296,13 @@ void PlayerChunkMap::PlayerChunk::broadcast(shared_ptr<Packet> packet)
 #endif
 
 		// From here on the same rules as in the loop above - don't send it if we've already sent to the same system
+#ifdef _DEDICATED_SERVER
+		bool dontSend = false;
+		for(unsigned int j = 0; j < sentTo.size(); j++)
+		{
+			if(sentTo[j] == player) { dontSend = true; break; }
+		}
+#else
 		bool dontSend = false;
 		if( sentTo.size() )
 		{
@@ -294,7 +313,7 @@ void PlayerChunkMap::PlayerChunk::broadcast(shared_ptr<Packet> packet)
 			}
 			else
 			{
-				for(unsigned int j = 0; j < sentTo.size(); j++ )	
+				for(unsigned int j = 0; j < sentTo.size(); j++ )
 				{
 					shared_ptr<ServerPlayer> player2 = sentTo[j];
 					INetworkPlayer *otherPlayer = player2->connection->getNetworkPlayer();
@@ -305,6 +324,7 @@ void PlayerChunkMap::PlayerChunk::broadcast(shared_ptr<Packet> packet)
 				}
 			}
 		}
+#endif
 		if( !dontSend )
 		{
             player->connection->send(packet);
