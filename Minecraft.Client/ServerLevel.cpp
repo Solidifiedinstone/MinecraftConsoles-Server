@@ -1328,11 +1328,8 @@ void ServerLevel::runQueuedSendTileUpdates()
 void ServerLevel::sendImmediateTileUpdate(int x, int y, int z)
 {
 	if (chunkMap == NULL) return;
-	fprintf(stderr, "[IMMEDTILE] x=%d y=%d z=%d chunkMap=%p\n", x, y, z, chunkMap);
 	shared_ptr<Packet> pkt(new TileUpdatePacket(x, y, z, this));
-	fprintf(stderr, "[IMMEDTILE] packet created, broadcasting\n");
 	chunkMap->broadcastTileUpdate(pkt, x, y, z);
-	fprintf(stderr, "[IMMEDTILE] done\n");
 }
 
 // 4J - added special versions of addEntity and extra processing on entity removed and added so we can limit the number of itementities created
