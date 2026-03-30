@@ -37,6 +37,7 @@ void HeavyTile::tick(Level *level, int x, int y, int z, Random *random)
 
 void HeavyTile::checkSlide(Level *level, int x, int y, int z)
 {
+	fprintf(stderr, "[CHECKSLIDE] %d %d %d hasChunks=%d\n", x, y, z, level->hasChunksAt(x-32,y-32,z-32,x+32,y+32,z+32));
 	int x2 = x;
 	int y2 = y;
 	int z2 = z;
@@ -67,6 +68,9 @@ void HeavyTile::checkSlide(Level *level, int x, int y, int z)
 			// packet before the entity packet, avoiding ghost block desync.
 			int savedData = level->getData(x, y, z);
 			level->removeTile(x, y, z);
+#ifdef _DEDICATED_SERVER
+			static_cast<ServerLevel*>(level)->sendImmediateTileUpdate(x, y, z);
+#endif
 			shared_ptr<FallingTile> e = shared_ptr<FallingTile>( new FallingTile(level, x + 0.5f, y + 0.5f, z + 0.5f, id, savedData) );
 			falling(e);
 			level->addEntity(e);
