@@ -37,7 +37,6 @@ void HeavyTile::tick(Level *level, int x, int y, int z, Random *random)
 
 void HeavyTile::checkSlide(Level *level, int x, int y, int z)
 {
-	fprintf(stderr, "[CHECKSLIDE] %d %d %d hasChunks=%d\n", x, y, z, level->hasChunksAt(x-32,y-32,z-32,x+32,y+32,z+32));
 	int x2 = x;
 	int y2 = y;
 	int z2 = z;
@@ -48,11 +47,17 @@ void HeavyTile::checkSlide(Level *level, int x, int y, int z)
 		if (instaFall || !level->hasChunksAt(x - r, y - r, z - r, x + r, y + r, z + r)  )
 		{
 			level->removeTile(x, y, z);
+#ifdef _DEDICATED_SERVER
+			static_cast<ServerLevel*>(level)->sendImmediateTileUpdate(x, y, z);
+#endif
 			while (isFree(level, x, y - 1, z) && y > 0)
 				y--;
 			if (y > 0)
 			{
 				level->setTileAndUpdate(x, y, z, id);
+#ifdef _DEDICATED_SERVER
+				static_cast<ServerLevel*>(level)->sendImmediateTileUpdate(x, y, z);
+#endif
 			}
 		}
 		else if (!level->isClientSide)
