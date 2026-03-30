@@ -175,7 +175,7 @@ class IQNetPlayer {
 public:
     BYTE GetSmallId() { return 0; }
     void SendData(IQNetPlayer*, const void*, DWORD, DWORD) {}
-    bool IsSameSystem(IQNetPlayer*) { return true; }
+    bool IsSameSystem(IQNetPlayer* other) { return this == other; }
     DWORD GetSendQueueSize(IQNetPlayer*, DWORD) { return 0; }
     DWORD GetCurrentRtt() { return 0; }
     bool IsHost() { return true; }

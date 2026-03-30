@@ -190,7 +190,7 @@ void IQNetPlayer::SendData(IQNetPlayer *player, const void *pvData, DWORD dwData
 {
 	app.DebugPrintf("Sending from 0x%x to 0x%x %d bytes\n",this,player,dwDataSize);
 }
-bool IQNetPlayer::IsSameSystem(IQNetPlayer *player) { return true; }
+bool IQNetPlayer::IsSameSystem(IQNetPlayer *player) { return this == player; }
 DWORD IQNetPlayer::GetSendQueueSize( IQNetPlayer *player, DWORD dwFlags ) { return 0; }
 DWORD IQNetPlayer::GetCurrentRtt() { return 0; }
 bool IQNetPlayer::IsHost() { return this == &IQNet::m_player[0]; }
