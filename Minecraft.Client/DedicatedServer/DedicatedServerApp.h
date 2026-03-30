@@ -76,6 +76,9 @@ public:
 	// Check if server is running
 	bool IsRunning() const { return m_bRunning; }
 
+	// Check if explicit shutdown was requested (via "stop" command or SIGTERM)
+	bool IsShutdownRequested() const { return m_bShutdownRequested; }
+
 	// Singleton access (for compatibility with code that expects 'app')
 	static DedicatedServerApp* GetInstance() { return s_pInstance; }
 

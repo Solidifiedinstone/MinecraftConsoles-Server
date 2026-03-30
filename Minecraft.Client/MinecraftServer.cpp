@@ -1860,6 +1860,14 @@ int MinecraftServer::mainDedicated(__int64 seed, void *lpParameter)
 
 void MinecraftServer::HaltServer(bool bPrimaryPlayerSignedOut)
 {
+#ifdef _DEDICATED_SERVER
+	// In dedicated server mode, only halt when explicitly requested via "stop" command or signal.
+	// Ignore console-specific halt triggers (player sign-out, session events, etc.) so the
+	// server stays alive when players disconnect.
+	DedicatedServerApp* pApp = DedicatedServerApp::GetInstance();
+	if (pApp != NULL && !pApp->IsShutdownRequested())
+		return;
+#endif
 	s_bServerHalted = true;
 	if( server != NULL )
 	{
