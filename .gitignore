@@ -42,3 +42,9 @@ Thumbs.db
 *~
 *.swp
 *.bak
+world/
+world.*/
+*.exe
+*.pdb
+*.zip
+server.properties
