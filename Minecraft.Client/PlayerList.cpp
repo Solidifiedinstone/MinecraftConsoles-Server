@@ -1456,14 +1456,14 @@ void PlayerList::removePlayerFromReceiving(shared_ptr<ServerPlayer> player, bool
 		playerRemoved = true;
 	}
 
-	INetworkPlayer *thisPlayer = player->connection->getNetworkPlayer();
+	INetworkPlayer *thisPlayer = player->connection ? player->connection->getNetworkPlayer() : NULL;
 	if( thisPlayer != NULL && playerRemoved )
 	{
 		for(AUTO_VAR(itP, players.begin()); itP != players.end(); ++itP)
 		{
 			shared_ptr<ServerPlayer> newPlayer = *itP;
 
-			INetworkPlayer *otherPlayer = newPlayer->connection->getNetworkPlayer();
+			INetworkPlayer *otherPlayer = newPlayer->connection ? newPlayer->connection->getNetworkPlayer() : NULL;
 
 			if( newPlayer != player &&
 				newPlayer->dimension == playerDim &&
@@ -1489,7 +1489,7 @@ void PlayerList::removePlayerFromReceiving(shared_ptr<ServerPlayer> player, bool
 		for(AUTO_VAR(itP, players.begin()); itP != players.end(); ++itP)
 		{
 			shared_ptr<ServerPlayer> newPlayer = *itP;
-			INetworkPlayer *checkingPlayer = newPlayer->connection->getNetworkPlayer();
+			INetworkPlayer *checkingPlayer = newPlayer->connection ? newPlayer->connection->getNetworkPlayer() : NULL;
 
 			if( checkingPlayer != NULL )
 			{
@@ -1500,7 +1500,7 @@ void PlayerList::removePlayerFromReceiving(shared_ptr<ServerPlayer> player, bool
 				for(AUTO_VAR(it, receiveAllPlayers[newPlayerDim].begin()); it != receiveAllPlayers[newPlayerDim].end(); ++it)
 				{
 					shared_ptr<ServerPlayer> primaryPlayer = *it;
-					INetworkPlayer *primPlayer = primaryPlayer->connection->getNetworkPlayer();
+					INetworkPlayer *primPlayer = primaryPlayer->connection ? primaryPlayer->connection->getNetworkPlayer() : NULL;
 					if(primPlayer != NULL && checkingPlayer->IsSameSystem( primPlayer ) )
 					{
 						foundPrimary = true;

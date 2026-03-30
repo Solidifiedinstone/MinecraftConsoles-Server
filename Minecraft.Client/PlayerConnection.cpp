@@ -536,7 +536,11 @@ void PlayerConnection::handleUseItem(shared_ptr<UseItemPacket> packet)
 void PlayerConnection::onDisconnect(DisconnectPacket::eDisconnectReason reason, void *reasonObjects)
 {
 	EnterCriticalSection(&done_cs);
-	if( done ) return;
+	if( done )
+	{
+		LeaveCriticalSection(&done_cs);
+		return;
+	}
 	//    logger.info(player.name + " lost connection: " + reason);
 	// 4J-PB - removed, since it needs to be localised in the language the client is in
 	//server->players->broadcastAll( shared_ptr<ChatPacket>( new ChatPacket(L"�e" + player->name + L" left the game.") ) );
