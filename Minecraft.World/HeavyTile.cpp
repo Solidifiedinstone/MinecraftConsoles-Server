@@ -47,17 +47,11 @@ void HeavyTile::checkSlide(Level *level, int x, int y, int z)
 		if (instaFall || !level->hasChunksAt(x - r, y - r, z - r, x + r, y + r, z + r)  )
 		{
 			level->removeTile(x, y, z);
-#ifdef _DEDICATED_SERVER
-			static_cast<ServerLevel*>(level)->sendImmediateTileUpdate(x, y, z);
-#endif
 			while (isFree(level, x, y - 1, z) && y > 0)
 				y--;
 			if (y > 0)
 			{
 				level->setTileAndUpdate(x, y, z, id);
-#ifdef _DEDICATED_SERVER
-				static_cast<ServerLevel*>(level)->sendImmediateTileUpdate(x, y, z);
-#endif
 			}
 		}
 		else if (!level->isClientSide)
