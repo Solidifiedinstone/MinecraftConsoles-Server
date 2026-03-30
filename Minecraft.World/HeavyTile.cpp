@@ -67,9 +67,6 @@ void HeavyTile::checkSlide(Level *level, int x, int y, int z)
 			// packet before the entity packet, avoiding ghost block desync.
 			int savedData = level->getData(x, y, z);
 			level->removeTile(x, y, z);
-#ifdef _DEDICATED_SERVER
-			static_cast<ServerLevel*>(level)->sendImmediateTileUpdate(x, y, z);
-#endif
 			shared_ptr<FallingTile> e = shared_ptr<FallingTile>( new FallingTile(level, x + 0.5f, y + 0.5f, z + 0.5f, id, savedData) );
 			falling(e);
 			level->addEntity(e);
