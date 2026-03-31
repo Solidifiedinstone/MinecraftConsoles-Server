@@ -1024,7 +1024,7 @@ void PlayerList::broadcastAll(shared_ptr<Packet> packet)
 	for (unsigned int i = 0; i < players.size(); i++)
 	{
 		shared_ptr<ServerPlayer> player = players[i];
-		player->connection->send(packet);
+		if (player->connection) player->connection->send(packet);
 	}
 }
 
@@ -1033,7 +1033,7 @@ void PlayerList::broadcastAll(shared_ptr<Packet> packet, int dimension)
 	for (unsigned int i = 0; i < players.size(); i++)
 	{
 		shared_ptr<ServerPlayer> player = players[i];
-		if (player->dimension == dimension) player->connection->send(packet);
+		if (player->connection && player->dimension == dimension) player->connection->send(packet);
 	}
 }
 
@@ -1410,6 +1410,7 @@ shared_ptr<ServerPlayer> PlayerList::findAlivePlayerOnSystem(shared_ptr<ServerPl
 	if( dimIndex == -1 ) dimIndex = 1;
 	else if( dimIndex == 1) dimIndex = 2;
 
+	if (!player->connection) return nullptr;
 	INetworkPlayer *thisPlayer = player->connection->getNetworkPlayer();
 	if( thisPlayer != NULL )
 	{
@@ -1417,7 +1418,7 @@ shared_ptr<ServerPlayer> PlayerList::findAlivePlayerOnSystem(shared_ptr<ServerPl
 		{
 			shared_ptr<ServerPlayer> newPlayer = *itP;
 
-			INetworkPlayer *otherPlayer = newPlayer->connection->getNetworkPlayer();
+			INetworkPlayer *otherPlayer = newPlayer->connection ? newPlayer->connection->getNetworkPlayer() : NULL;
 
 			if( !newPlayer->removed &&
 				newPlayer != player &&
@@ -1531,7 +1532,7 @@ void PlayerList::addPlayerToReceiving(shared_ptr<ServerPlayer> player)
 
 	bool shouldAddPlayer = true;
 
-	INetworkPlayer *thisPlayer = player->connection->getNetworkPlayer();
+	INetworkPlayer *thisPlayer = player->connection ? player->connection->getNetworkPlayer() : NULL;
 
 	if( thisPlayer == NULL )
 	{
@@ -1543,7 +1544,7 @@ void PlayerList::addPlayerToReceiving(shared_ptr<ServerPlayer> player)
 		for(AUTO_VAR(it, receiveAllPlayers[playerDim].begin()); it != receiveAllPlayers[playerDim].end(); ++it)
 		{
 			shared_ptr<ServerPlayer> oldPlayer = *it;
-			INetworkPlayer *checkingPlayer = oldPlayer->connection->getNetworkPlayer();
+			INetworkPlayer *checkingPlayer = oldPlayer->connection ? oldPlayer->connection->getNetworkPlayer() : NULL;
 			if(checkingPlayer != NULL && checkingPlayer->IsSameSystem( thisPlayer ) ) 
 			{
 				shouldAddPlayer = false;
