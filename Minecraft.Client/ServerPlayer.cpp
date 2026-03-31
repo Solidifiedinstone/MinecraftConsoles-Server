@@ -527,6 +527,8 @@ void ServerPlayer::doTickB()
 	}
 #endif
 
+	if (!connection) return;
+
 	if (getHealth() != lastSentHealth || lastSentFood != foodData.getFoodLevel() || ((foodData.getSaturationLevel() == 0) != lastFoodSaturationZero))
 	{
 		// 4J Stu - Added m_lastDamageSource for telemetry
