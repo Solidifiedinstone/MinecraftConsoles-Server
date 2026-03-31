@@ -291,7 +291,6 @@ void LivingEntity::tickDeath()
 			if (!isBaby() && level->getGameRules()->getBoolean(GameRules::RULE_DOMOBLOOT))
 			{
 				int xpCount = this->getExperienceReward(lastHurtByPlayer);
-				fprintf(stderr, "[XP_SPAWN] mob died, xpCount=%d lastHurtByPlayerTime=%d\n", xpCount, lastHurtByPlayerTime);
 				while (xpCount > 0)
 				{
 					int newCount = ExperienceOrb::getExperienceValue(xpCount);
