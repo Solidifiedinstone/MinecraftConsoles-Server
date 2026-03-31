@@ -915,8 +915,7 @@ void PlayerList::tick()
 		shared_ptr<ServerPlayer> p = players[i];
 		if (p != nullptr)
 		{
-			if (p->totalExperience > 0 || p->lastSentExp != p->totalExperience)
-				fprintf(stderr, "[PL_TICK] player[%d] this=%p total=%d lastSent=%d\n", i, (void*)p.get(), p->totalExperience, p->lastSentExp);
+			fprintf(stderr, "[PL_TICK] player[%d] this=%p total=%d\n", i, (void*)p.get(), p->totalExperience);
 			p->doTickB();
 		}
 	}
