@@ -527,7 +527,8 @@ void ServerPlayer::doTickB()
 	}
 #endif
 
-	if (!connection) { fprintf(stderr, "[DOTICKB] connection null, skipping (total=%d lastSent=%d)\n", totalExperience, lastSentExp); return; }
+	fprintf(stderr, "[DOTICKB] called: total=%d lastSent=%d conn=%p\n", totalExperience, lastSentExp, (void*)connection.get());
+	if (!connection) { return; }
 
 	if (getHealth() != lastSentHealth || lastSentFood != foodData.getFoodLevel() || ((foodData.getSaturationLevel() == 0) != lastFoodSaturationZero))
 	{
