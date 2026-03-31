@@ -558,6 +558,7 @@ void ServerPlayer::doTickB()
 	if (totalExperience != lastSentExp)
 	{
 		lastSentExp = totalExperience;
+		fprintf(stderr, "[XP_PKT] sending: progress=%.4f total=%d level=%d\n", experienceProgress, totalExperience, experienceLevel);
 		connection->send( shared_ptr<SetExperiencePacket>( new SetExperiencePacket(experienceProgress, totalExperience, experienceLevel) ) );
 	}
 
