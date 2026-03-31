@@ -907,6 +907,18 @@ void PlayerList::repositionAcrossDimension(shared_ptr<Entity> entity, int lastDi
 
 void PlayerList::tick()
 {
+	// Send XP/health/food state packets for all players every server tick.
+	// doTickB is normally called per-movement-packet, but if movement stops
+	// (e.g. after Wine sync stalls), players would never receive XP updates.
+	for (unsigned int i = 0; i < players.size(); i++)
+	{
+		shared_ptr<ServerPlayer> p = players[i];
+		if (p != nullptr)
+		{
+			p->doTickB();
+		}
+	}
+
 	// 4J - brought changes to how often this is sent forward from 1.2.3
 	if (++sendAllPlayerInfoIn > SEND_PLAYER_INFO_INTERVAL)
 	{
