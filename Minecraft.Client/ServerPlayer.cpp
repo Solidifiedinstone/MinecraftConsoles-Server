@@ -563,6 +563,10 @@ void ServerPlayer::doTickB()
 		fprintf(stderr, "[XP_PKT] sending: progress=%.4f total=%d level=%d\n", experienceProgress, totalExperience, experienceLevel);
 		connection->send( shared_ptr<SetExperiencePacket>( new SetExperiencePacket(experienceProgress, totalExperience, experienceLevel) ) );
 	}
+	else if (totalExperience > 0 && (tickCount % 20 == 0))
+	{
+		fprintf(stderr, "[XP_SAME] doTickB: total=%d == lastSent=%d, no packet (progress=%.4f level=%d)\n", totalExperience, lastSentExp, experienceProgress, experienceLevel);
+	}
 
 }
 
