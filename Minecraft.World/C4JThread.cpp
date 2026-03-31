@@ -875,9 +875,11 @@ DWORD C4JThread::EventArray::WaitForAll(int timeoutMs )
 	}
 #else
 	// WaitForMultipleObjects holds Wine's internal sync_cs across the entire wait,
-	// starving other threads. Use WaitForSingleObject when there's only one event.
-	if (m_size == 1) { retVal = WaitForSingleObject(m_events[0], timeoutMs); }
-	else { retVal = WaitForMultipleObjects(m_size, m_events, true, timeoutMs); }
+	// starving other threads. Wait sequentially using WaitForSingleObject instead.
+	retVal = WAIT_OBJECT_0;
+	for (int i = 0; i < m_size && retVal == WAIT_OBJECT_0; i++) {
+		retVal = WaitForSingleObject(m_events[i], timeoutMs);
+	}
 #endif // __PS3__
 
 	return retVal;
