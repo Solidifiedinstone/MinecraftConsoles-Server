@@ -2388,7 +2388,7 @@ void Player::increaseXp(int i)
 	int oldTotal = totalExperience;
 	experienceProgress += (float) i / getXpNeededForNextLevel();
 	totalExperience += i;
-	fprintf(stderr, "[XP_INC] increaseXp: i=%d oldTotal=%d newTotal=%d progress=%.4f\n", i, oldTotal, totalExperience, experienceProgress);
+	fprintf(stderr, "[XP_INC] increaseXp: i=%d oldTotal=%d newTotal=%d progress=%.4f this=%p\n", i, oldTotal, totalExperience, experienceProgress, (void*)this);
 	while (experienceProgress >= 1)
 	{
 		experienceProgress = (experienceProgress - 1) * getXpNeededForNextLevel();
