@@ -134,6 +134,10 @@ bool BedTile::use(Level *level, int x, int y, int z, shared_ptr<Player> player, 
 		}
 	}
 
+	// LCE behavior: always set spawn point when right-clicking a bed in the overworld, even if sleep fails
+	Pos respawnPos(x, y, z);
+	player->setRespawnPosition(&respawnPos, false);
+
 	Player::BedSleepingResult result = player->startSleepInBed(x, y, z);
 	if (result == Player::OK)
 	{

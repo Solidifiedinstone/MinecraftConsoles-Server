@@ -192,6 +192,8 @@ void ExperienceOrb::playerTouch(shared_ptr<Player> player)
 {
 	if (level->isClientSide) return;
 
+	fprintf(stderr, "[XP_TOUCH] playerTouch: throwTime=%d takeXpDelay=%d value=%d\n", throwTime, player->takeXpDelay, value);
+
 	if (throwTime == 0 && player->takeXpDelay == 0)
 	{
 		player->takeXpDelay = 2;
@@ -200,6 +202,7 @@ void ExperienceOrb::playerTouch(shared_ptr<Player> player)
 		player->take(shared_from_this(), 1);
 		player->increaseXp(value);
 		remove();
+		fprintf(stderr, "[XP_TOUCH] picked up %d xp\n", value);
 	}
 }
 
