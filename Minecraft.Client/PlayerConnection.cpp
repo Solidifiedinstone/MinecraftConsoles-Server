@@ -147,6 +147,7 @@ void PlayerConnection::handlePlayerInput(shared_ptr<PlayerInputPacket> packet)
 void PlayerConnection::handleMovePlayer(shared_ptr<MovePlayerPacket> packet)
 {
 	ServerLevel *level = server->getLevel(player->dimension);
+	if (!level) return;
 
 	didTick = true;
 	if(synched) m_bHasClientTickedOnce = true;
@@ -382,6 +383,7 @@ void PlayerConnection::teleport(double x, double y, double z, float yRot, float 
 void PlayerConnection::handlePlayerAction(shared_ptr<PlayerActionPacket> packet)
 {
 	ServerLevel *level = server->getLevel(player->dimension);
+	if (!level) return;
 	player->resetLastActionTime();
 
 	if (packet->action == PlayerActionPacket::DROP_ITEM)
@@ -448,6 +450,7 @@ void PlayerConnection::handlePlayerAction(shared_ptr<PlayerActionPacket> packet)
 void PlayerConnection::handleUseItem(shared_ptr<UseItemPacket> packet)
 {
 	ServerLevel *level = server->getLevel(player->dimension);
+	if (!level) return;
 	shared_ptr<ItemInstance> item = player->inventory->getSelected();
 	bool informClient = false;
 	int x = packet->getX();
@@ -748,6 +751,7 @@ wstring PlayerConnection::getConsoleName()
 void PlayerConnection::handleInteract(shared_ptr<InteractPacket> packet)
 {
 	ServerLevel *level = server->getLevel(player->dimension);
+	if (!level) return;
 	shared_ptr<Entity> target = level->getEntity(packet->target);
 	player->resetLastActionTime();
 
@@ -1288,6 +1292,7 @@ void PlayerConnection::handleSignUpdate(shared_ptr<SignUpdatePacket> packet)
 	app.DebugPrintf("PlayerConnection::handleSignUpdate\n");
 
 	ServerLevel *level = server->getLevel(player->dimension);
+	if (!level) return;
 	if (level->hasChunkAt(packet->x, packet->y, packet->z))
 	{
 		shared_ptr<TileEntity> te = level->getTileEntity(packet->x, packet->y, packet->z);
