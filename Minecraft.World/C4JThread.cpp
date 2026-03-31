@@ -874,7 +874,10 @@ DWORD C4JThread::EventArray::WaitForAll(int timeoutMs )
 		default: return WAIT_FAILED;
 	}
 #else
-	retVal = WaitForMultipleObjects(m_size, m_events, true, timeoutMs);
+	// WaitForMultipleObjects holds Wine's internal sync_cs across the entire wait,
+	// starving other threads. Use WaitForSingleObject when there's only one event.
+	if (m_size == 1) { retVal = WaitForSingleObject(m_events[0], timeoutMs); }
+	else { retVal = WaitForMultipleObjects(m_size, m_events, true, timeoutMs); }
 #endif // __PS3__
 
 	return retVal;
@@ -963,6 +966,9 @@ DWORD C4JThread::EventArray::WaitForAny(int timeoutMs )
 		default: return WAIT_FAILED;
 	}
 #else
+	// WaitForMultipleObjects holds Wine's internal sync_cs across the entire wait,
+	// starving other threads. Use WaitForSingleObject when there's only one event.
+	if (m_size == 1) return WaitForSingleObject(m_events[0], timeoutMs);
 	return WaitForMultipleObjects(m_size, m_events, false, timeoutMs);
 #endif // __PS3__
 }
